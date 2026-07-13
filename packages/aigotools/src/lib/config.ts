@@ -1,6 +1,24 @@
-const clerkProxyUrl = (
+function normalizeClerkProxyUrl(value: string) {
+  const trimmed = value.replace(/\/+$/, "");
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.endsWith("/api/__clerk")) {
+    return trimmed;
+  }
+
+  if (trimmed.endsWith("/__clerk")) {
+    return `${trimmed.slice(0, -"/__clerk".length)}/api/__clerk`;
+  }
+
+  return trimmed;
+}
+
+const clerkProxyUrl = normalizeClerkProxyUrl(
   (process.env.NEXT_PUBLIC_CLERK_PROXY_URL as string) || ""
-).replace(/\/__clerk\/?$/, "/api/__clerk");
+);
 
 export const AppConfig = {
   // app

@@ -2,6 +2,22 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 const clerkFrontendApi = "https://clerk.saasdance.com";
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+async function readRawBody(req: NextApiRequest) {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks);
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -34,7 +50,12 @@ export default async function handler(
 
       if (
         !value ||
-        ["host", "content-length", "content-encoding"].includes(lowerKey)
+        [
+          "host",
+          "content-length",
+          "content-encoding",
+          "accept-encoding",
+        ].includes(lowerKey)
       ) {
         return;
       }
@@ -42,15 +63,22 @@ export default async function handler(
       headers.set(key, Array.isArray(value) ? value.join(",") : value);
     });
 
-    const response = await fetch(targetUrl, {
+    const rawBody =
+      req.method === "GET" || req.method === "HEAD"
+        ? undefined
+        : await readRawBody(req);
+    const requestInit: RequestInit & { duplex?: "half" } = {
       method: req.method,
       headers,
-      body:
-        req.method === "GET" || req.method === "HEAD"
-          ? undefined
-          : (req as any),
+      body: rawBody?.length ? rawBody : undefined,
       redirect: "manual",
-    });
+    };
+
+    if (requestInit.body) {
+      requestInit.duplex = "half";
+    }
+
+    const response = await fetch(targetUrl, requestInit);
     const body = Buffer.from(await response.arrayBuffer());
     const safeHeaders = [
       "cache-control",
