@@ -6,6 +6,7 @@ import { FormEvent, useState } from "react";
 import { toast } from "react-toastify";
 
 import { autoFillTool, submitReview } from "@/lib/actions";
+import { uploadFormDataToCloudinary } from "@/lib/cloudinary";
 import { ReviewState, SiteState, ProcessStage } from "@/lib/constants";
 
 const categories = [
@@ -56,6 +57,7 @@ function UploadBox({
   onChange: (fileName: string) => void;
 }) {
   const isImageUrl = /^(https?:\/\/|\/)/i.test(fileName || "");
+  const [uploading, setUploading] = useState(false);
 
   return (
     <label className="block">
@@ -68,7 +70,8 @@ function UploadBox({
           accept="image/*"
           className="sr-only"
           type="file"
-          onChange={(event) => {
+          disabled={uploading}
+          onChange={async (event) => {
             const file = event.target.files?.[0];
 
             if (!file) {
@@ -79,11 +82,26 @@ function UploadBox({
               event.target.value = "";
               return;
             }
-            onChange(file.name);
+            try {
+              setUploading(true);
+              const formData = new FormData();
+
+              formData.append("files", file);
+              const [url] = await uploadFormDataToCloudinary(formData);
+
+              onChange(url);
+            } catch {
+              toast.error("Image upload failed");
+            } finally {
+              setUploading(false);
+              event.target.value = "";
+            }
           }}
         />
         <span className="flex h-full w-full flex-col items-center justify-center gap-1 overflow-hidden px-3 text-sm text-primary-400">
-          {isImageUrl ? (
+          {uploading ? (
+            <span>Uploading...</span>
+          ) : isImageUrl ? (
             <img
               alt={label}
               className="max-h-12 max-w-full object-contain"

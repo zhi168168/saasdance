@@ -3,13 +3,17 @@ import { currentUser } from "@clerk/nextjs/server";
 import { FilterQuery } from "mongoose";
 import axios from "axios";
 import { createHash } from "crypto";
-import { mkdir } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 
 import { createTemplateSite } from "./create-template-site";
 import { ProcessStage, ReviewState, SiteState } from "./constants";
 import { AppConfig } from "./config";
 import { searchSeedSites, seedCategories, seedSites } from "./seed-data";
+import {
+  uploadBufferToCloudinary,
+  uploadRemoteImageToCloudinary,
+} from "./cloudinary";
 
 import dbConnect from "@/lib/db-connect";
 import { Site, SiteDocument, SiteModel } from "@/models/site";
@@ -377,11 +381,24 @@ async function captureHomepageScreenshot(websiteUrl: string) {
       timeout: 20000,
     });
     await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
-    await page.screenshot({
-      path: outputPath,
+    const screenshot = await page.screenshot({
       fullPage: false,
       animations: "disabled",
     });
+
+    if (AppConfig.imageStorage === "cloudinary") {
+      try {
+        return await uploadBufferToCloudinary(
+          Buffer.from(screenshot),
+          "image/png",
+          fileName
+        );
+      } catch (error) {
+        console.log("Upload homepage screenshot to Cloudinary failed", error);
+      }
+    }
+
+    await writeFile(outputPath, screenshot);
 
     return `/autofill-screenshots/${fileName}`;
   } catch (error) {
@@ -430,11 +447,20 @@ export async function autoFillTool(url: string) {
     getMetaContent(html, /<link[^>]+rel=["'][^"']*(?:apple-touch-icon|shortcut icon|icon)[^"']*["'][^>]+href=["']([^"']+)["'][^>]*>/i) ||
     getMetaContent(html, /<link[^>]+href=["']([^"']+)["'][^>]+rel=["'][^"']*(?:apple-touch-icon|shortcut icon|icon)[^"']*["'][^>]*>/i);
 
-  const logo =
+  const logoUrl =
     resolveUrl(iconHref, websiteUrl) ||
     `https://www.google.com/s2/favicons?domain=${encodeURIComponent(
       urlObj.hostname
     )}&sz=128`;
+  let logo = logoUrl;
+
+  if (AppConfig.imageStorage === "cloudinary") {
+    try {
+      logo = await uploadRemoteImageToCloudinary(logoUrl);
+    } catch (error) {
+      console.log("Upload logo to Cloudinary failed", error);
+    }
+  }
 
   const appImage = await captureHomepageScreenshot(websiteUrl);
 

@@ -10,6 +10,7 @@ import { uploadFormDataToCos } from "../../lib/cos";
 import Loading from "./loading";
 
 import { uploadFormDataToS3 } from "@/lib/s3";
+import { uploadFormDataToCloudinary } from "@/lib/cloudinary";
 import { AppConfig } from "@/lib/config";
 
 export default function ImageUpload({
@@ -46,6 +47,10 @@ export default function ImageUpload({
           onChange(res[0]);
         } else if (AppConfig.imageStorage === "cos") {
           const res = await uploadFormDataToCos(formData);
+
+          onChange(res[0]);
+        } else if (AppConfig.imageStorage === "cloudinary") {
+          const res = await uploadFormDataToCloudinary(formData);
 
           onChange(res[0]);
         } else {

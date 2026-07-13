@@ -31,7 +31,11 @@ export const AppConfig = {
       ? ""
       : (process.env.MONGODB_URI as string) || "",
   // image storage
-  imageStorage: process.env.NEXT_PUBLIC_IMAGE_STORAGE as "minio" | "s3" | "cos",
+  imageStorage: process.env.NEXT_PUBLIC_IMAGE_STORAGE as
+    | "minio"
+    | "s3"
+    | "cos"
+    | "cloudinary",
 
   // minio
   minioBase: (process.env.MINIO_BASE as string) || "",
@@ -57,6 +61,11 @@ export const AppConfig = {
   cosBucket: (process.env.COS_BUCKET as string) || "",
   cosSecertId: (process.env.COS_SECERT_ID as string) || "",
   cosSecertKey: (process.env.COS_SECERT_KEY as string) || "",
+  // cloudinary
+  cloudinaryCloudName: (process.env.CLOUDINARY_CLOUD_NAME as string) || "",
+  cloudinaryApiKey: (process.env.CLOUDINARY_API_KEY as string) || "",
+  cloudinaryApiSecret: (process.env.CLOUDINARY_API_SECRET as string) || "",
+  cloudinaryFolder: (process.env.CLOUDINARY_FOLDER as string) || "saasdance",
 
   // crawer
   crawlerGateway: (process.env.CRAWLER_GATEWAY as string) || "",
