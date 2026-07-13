@@ -77,7 +77,7 @@ function siteKeyFromUrl(url: string) {
 }
 
 function getBadgeBaseUrl() {
-  return (AppConfig.siteUrl || "https://saasdance.com").replace(/\/+$/, "");
+  return "https://saasdance.com";
 }
 
 function getBadgeHost() {
