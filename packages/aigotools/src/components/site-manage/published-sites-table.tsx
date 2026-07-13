@@ -61,9 +61,21 @@ export default function PublishedSitesTable() {
         return;
       }
 
+      if (site.state !== SiteState.published && !site.badgeVerified) {
+        toast.error(t("publishRequiresBadge"));
+
+        return;
+      }
+
       try {
         setUpdating(site._id);
-        await triggerSitePublish(site);
+
+        const updated = await triggerSitePublish(site);
+
+        if (!updated) {
+          toast.error(t("failTriggerPublish"));
+        }
+
         await handleSearch();
       } catch (error) {
         console.log(error);
