@@ -43,6 +43,7 @@ export const AppConfig = {
   minioSecretKey: (process.env.MINIO_SECERT_KEY as string) || "",
   // aws s3
   s3Base: (process.env.S3_BASE as string) || "",
+  s3Endpoint: (process.env.S3_ENDPOINT as string) || "",
   s3Region: (process.env.S3_REGION as string) || "",
   s3Bucket: (process.env.S3_BUCKET as string) || "",
   s3AccessKey: (process.env.S3_ACCESS_KEY_ID as string) || "",

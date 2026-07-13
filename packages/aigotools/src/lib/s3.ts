@@ -10,6 +10,7 @@ import { AppConfig } from "./config";
 
 const s3 = new S3Client({
   region: AppConfig.s3Region,
+  endpoint: AppConfig.s3Endpoint || undefined,
   credentials: {
     accessKeyId: AppConfig.s3AccessKey as string,
     secretAccessKey: AppConfig.s3Secert as string,
