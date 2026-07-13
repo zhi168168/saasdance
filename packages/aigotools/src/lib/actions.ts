@@ -39,6 +39,81 @@ function pickCategoryName(site: Site) {
   return site;
 }
 
+async function findOrCreateCategoryId(name?: string) {
+  if (!name) {
+    return null;
+  }
+
+  const trimmed = name.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const category = await CategoryModel.findOneAndUpdate(
+    { name: trimmed },
+    {
+      $setOnInsert: {
+        name: trimmed,
+        icon: "",
+        featured: false,
+        weight: 0,
+        createdAt: Date.now(),
+      },
+      $set: {
+        updatedAt: Date.now(),
+      },
+    },
+    { new: true, upsert: true }
+  );
+
+  return category._id;
+}
+
+function siteKeyFromUrl(url: string) {
+  const urlObj = new URL(url);
+
+  return urlObj.hostname.replace(/[^\w]/g, "_");
+}
+
+async function publishSiteFromReview(review: ReviewDocument, userId: string) {
+  const urlObj = new URL(review.url);
+  const categoryId = await findOrCreateCategoryId(review.category);
+  const siteKey = siteKeyFromUrl(review.url);
+  const now = Date.now();
+  const siteData = createTemplateSite({
+    userId,
+    url: urlObj.origin,
+    siteKey,
+    name: review.name,
+    snapshot: review.appImage || "",
+    desceription: review.tagline || "",
+    pricingType: "Free",
+    categories: categoryId ? [categoryId.toString()] : [],
+    images: review.logo ? [review.logo] : [],
+    metaDesceription: review.tagline || "",
+    state: SiteState.published,
+    processStage: ProcessStage.success,
+    updatedAt: now,
+  });
+
+  delete (siteData as Partial<Site>)._id;
+
+  return SiteModel.findOneAndUpdate(
+    { siteKey },
+    {
+      $set: {
+        ...siteData,
+        updatedAt: now,
+      },
+      $setOnInsert: {
+        createdAt: now,
+      },
+    },
+    { new: true, upsert: true }
+  );
+}
+
 function reviewToObject(review: ReviewDocument) {
   const reviewObj = review.toObject();
 
@@ -776,16 +851,14 @@ export async function updateReviewState(reviewId: string, state: ReviewState) {
     }
 
     if (state === ReviewState.approved) {
-      const site = await saveSite(
-        createTemplateSite({
-          userId: user.id,
-          name: review.name,
-          url: review.url,
-        })
-      );
+      const site = await publishSiteFromReview(review, user.id);
 
       if (site) {
-        await dispatchSiteCrawl(site._id.toString());
+        review.state = state;
+        review.updatedAt = Date.now();
+        await review.save();
+
+        return true;
       } else {
         throw new Error("Save site error");
       }
