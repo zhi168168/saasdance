@@ -9,6 +9,10 @@ import { AppConfig } from "@/lib/config";
 const perSitemapCount = 2000;
 
 export async function generateSitemaps() {
+  if (!AppConfig.mongoUri) {
+    return [{ id: -1 }];
+  }
+
   await dbConnect();
 
   const siteCount = await SiteModel.countDocuments({
@@ -58,6 +62,10 @@ export default async function sitemap({ id }: { id: number }) {
       }
     );
   } else {
+    if (!AppConfig.mongoUri) {
+      return [];
+    }
+
     // sites page site map
     await dbConnect();
 
