@@ -12,9 +12,12 @@ const intlMiddleware = createMiddleware({
   localePrefix: localePrefix,
 });
 
-const isManageRoute = createRouteMatcher(["/(.*)/dashboard"]);
+const isManageRoute = createRouteMatcher([
+  "/dashboard(.*)",
+  "/(.*)/dashboard(.*)",
+]);
 
-const isUserRoute = createRouteMatcher(["/(.*)/submit"]);
+const isUserRoute = createRouteMatcher(["/submit(.*)", "/(.*)/submit(.*)"]);
 
 function handleIntl(req: Parameters<typeof intlMiddleware>[0]) {
   const nextPathname = req.nextUrl.pathname;
@@ -31,15 +34,15 @@ function createProtectedRouteMiddleware() {
     (auth, req) => {
     if (isUserRoute(req)) auth().protect();
 
-    if (isManageRoute(req)) {
-      const { userId, redirectToSignIn } = auth();
+      if (isManageRoute(req)) {
+        const { userId, redirectToSignIn } = auth();
 
-      if (!userId || !AppConfig.manageUsers.includes(userId)) {
-        return redirectToSignIn();
+        if (!userId || !AppConfig.manageUsers.includes(userId)) {
+          return redirectToSignIn();
+        }
       }
-    }
 
-    return handleIntl(req);
+      return handleIntl(req);
     },
     { debug: AppConfig.debugClerk }
   );
