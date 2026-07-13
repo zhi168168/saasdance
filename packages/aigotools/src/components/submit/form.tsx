@@ -129,9 +129,7 @@ function UploadBox({
 
 export default function Form() {
   const t = useTranslations("submit");
-  const badgeBaseUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "") ||
-    "https://saasdance.com";
+  const badgeBaseUrl = "https://saasdance.com";
 
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
