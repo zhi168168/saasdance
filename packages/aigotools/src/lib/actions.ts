@@ -357,6 +357,9 @@ function inferCategory(text: string) {
 async function captureHomepageScreenshot(websiteUrl: string) {
   let browser: Awaited<ReturnType<typeof import("playwright").chromium.launch>> | null =
     null;
+  const fallbackScreenshotUrl = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(
+    websiteUrl
+  )}?w=1440`;
 
   try {
     const { chromium } = await import("playwright");
@@ -365,10 +368,6 @@ async function captureHomepageScreenshot(websiteUrl: string) {
       .digest("hex")
       .slice(0, 16);
     const fileName = `${hash}.png`;
-    const outputDir = join(process.cwd(), "public", "autofill-screenshots");
-    const outputPath = join(outputDir, fileName);
-
-    await mkdir(outputDir, { recursive: true });
 
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({
@@ -398,13 +397,25 @@ async function captureHomepageScreenshot(websiteUrl: string) {
       }
     }
 
+    const outputDir = join(process.cwd(), "public", "autofill-screenshots");
+    const outputPath = join(outputDir, fileName);
+
+    await mkdir(outputDir, { recursive: true });
     await writeFile(outputPath, screenshot);
 
     return `/autofill-screenshots/${fileName}`;
   } catch (error) {
     console.log("Capture homepage screenshot failed", error);
 
-    return "";
+    if (AppConfig.imageStorage === "cloudinary") {
+      try {
+        return await uploadRemoteImageToCloudinary(fallbackScreenshotUrl);
+      } catch (uploadError) {
+        console.log("Upload fallback screenshot to Cloudinary failed", uploadError);
+      }
+    }
+
+    return fallbackScreenshotUrl;
   } finally {
     await browser?.close().catch(() => {});
   }

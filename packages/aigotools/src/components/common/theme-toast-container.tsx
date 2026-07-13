@@ -1,18 +1,19 @@
 "use client";
-import { useTheme } from "next-themes";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function ThemeToastContainer() {
-  const { theme } = useTheme();
-
   return (
     <ToastContainer
-      autoClose={1000}
-      limit={1}
+      autoClose={2500}
+      bodyClassName="!text-sm !font-medium !text-slate-950"
+      closeButton={false}
+      hideProgressBar
+      limit={2}
       pauseOnFocusLoss={false}
       position="top-center"
-      theme={theme}
+      theme="light"
+      toastClassName="!rounded-lg !bg-white !text-slate-950 !shadow-xl !ring-1 !ring-slate-200"
     />
   );
 }
