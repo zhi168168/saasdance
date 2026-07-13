@@ -6,6 +6,10 @@ import { ReviewState } from "@/lib/constants";
 export interface ReviewDocument extends mongoose.Document {
   name: string;
   url: string;
+  tagline?: string;
+  category?: string;
+  logo?: string;
+  appImage?: string;
   userId: string;
   userEmail: string;
   state: ReviewState;
@@ -23,6 +27,18 @@ const ReviewSchema = new mongoose.Schema<ReviewDocument>({
   url: {
     type: String,
     required: true,
+  },
+  tagline: {
+    type: String,
+  },
+  category: {
+    type: String,
+  },
+  logo: {
+    type: String,
+  },
+  appImage: {
+    type: String,
   },
   userId: {
     type: String,

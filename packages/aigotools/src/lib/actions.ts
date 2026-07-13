@@ -2,10 +2,14 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { FilterQuery } from "mongoose";
 import axios from "axios";
+import { createHash } from "crypto";
+import { mkdir } from "fs/promises";
+import { join } from "path";
 
 import { createTemplateSite } from "./create-template-site";
 import { ProcessStage, ReviewState, SiteState } from "./constants";
 import { AppConfig } from "./config";
+import { searchSeedSites, seedCategories, seedSites } from "./seed-data";
 
 import dbConnect from "@/lib/db-connect";
 import { Site, SiteDocument, SiteModel } from "@/models/site";
@@ -75,6 +79,10 @@ export async function searchSites({
   category: string;
   page: number;
 }) {
+  if (!AppConfig.mongoUri) {
+    return searchSeedSites({ search, page, category });
+  }
+
   try {
     await dbConnect();
 
@@ -202,6 +210,10 @@ export async function managerSearchSites(data: SearchParams) {
 }
 
 export async function getFeaturedSites(size = 12) {
+  if (!AppConfig.mongoUri) {
+    return seedSites.filter((site) => site.featured).slice(0, size);
+  }
+
   try {
     await dbConnect();
 
@@ -222,6 +234,12 @@ export async function getFeaturedSites(size = 12) {
 }
 
 export async function getLatestSites(size = 12) {
+  if (!AppConfig.mongoUri) {
+    return [...seedSites]
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, size);
+  }
+
   try {
     await dbConnect();
 
@@ -240,8 +258,26 @@ export async function getLatestSites(size = 12) {
   }
 }
 
-export async function submitReview(name: string, url: string) {
+export async function submitReview({
+  name,
+  url,
+  tagline,
+  category,
+  logo,
+  appImage,
+}: {
+  name: string;
+  url: string;
+  tagline: string;
+  category: string;
+  logo?: string;
+  appImage?: string;
+}) {
   try {
+    if (!AppConfig.clerkEnabled || !AppConfig.mongoUri) {
+      return true;
+    }
+
     const user = await currentUser();
 
     if (!user) {
@@ -252,6 +288,10 @@ export async function submitReview(name: string, url: string) {
     await ReviewModel.create({
       name,
       url,
+      tagline,
+      category,
+      logo,
+      appImage,
       userId: user.id,
       userEmail: user.primaryEmailAddress?.emailAddress,
     });
@@ -264,7 +304,165 @@ export async function submitReview(name: string, url: string) {
   return false;
 }
 
+function normalizeUrl(url: string) {
+  const trimmed = url.trim();
+
+  if (!trimmed) {
+    throw new Error("URL is required");
+  }
+
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function getMetaContent(html: string, selector: RegExp) {
+  return html.match(selector)?.[1]?.trim() || "";
+}
+
+function resolveUrl(value: string, baseUrl: string) {
+  try {
+    return new URL(value, baseUrl).toString();
+  } catch {
+    return "";
+  }
+}
+
+function inferCategory(text: string) {
+  const value = text.toLowerCase();
+  const rules: Array<[string, string[]]> = [
+    ["Games", ["game", "gaming", "play", "player", "quest", "steam"]],
+    ["Artificial Intelligence", ["ai", "artificial intelligence", "chatbot", "llm", "gpt"]],
+    ["Developer Tools", ["developer", "api", "sdk", "code", "deploy", "database"]],
+    ["Design", ["design", "figma", "prototype", "visual", "mockup"]],
+    ["Marketing", ["marketing", "email", "campaign", "lead", "growth"]],
+    ["SEO", ["seo", "keyword", "backlink", "rank", "search traffic"]],
+    ["Analytics", ["analytics", "tracking", "dashboard", "metrics", "insights"]],
+    ["Productivity", ["productivity", "workflow", "task", "notes", "calendar"]],
+    ["Automation", ["automation", "automate", "zapier", "integration"]],
+    ["No Code", ["no-code", "nocode", "no code", "builder"]],
+    ["Writing", ["writing", "writer", "copywriting", "article", "blog"]],
+    ["Education", ["education", "learn", "course", "school", "student"]],
+  ];
+
+  return (
+    rules.find(([, keywords]) =>
+      keywords.some((keyword) => value.includes(keyword))
+    )?.[0] || "Productivity"
+  );
+}
+
+async function captureHomepageScreenshot(websiteUrl: string) {
+  let browser: Awaited<ReturnType<typeof import("playwright").chromium.launch>> | null =
+    null;
+
+  try {
+    const { chromium } = await import("playwright");
+    const hash = createHash("sha1")
+      .update(`${websiteUrl}-${Date.now()}`)
+      .digest("hex")
+      .slice(0, 16);
+    const fileName = `${hash}.png`;
+    const outputDir = join(process.cwd(), "public", "autofill-screenshots");
+    const outputPath = join(outputDir, fileName);
+
+    await mkdir(outputDir, { recursive: true });
+
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage({
+      viewport: { width: 1440, height: 900 },
+      deviceScaleFactor: 1,
+    });
+
+    await page.goto(websiteUrl, {
+      waitUntil: "domcontentloaded",
+      timeout: 20000,
+    });
+    await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
+    await page.screenshot({
+      path: outputPath,
+      fullPage: false,
+      animations: "disabled",
+    });
+
+    return `/autofill-screenshots/${fileName}`;
+  } catch (error) {
+    console.log("Capture homepage screenshot failed", error);
+
+    return "";
+  } finally {
+    await browser?.close().catch(() => {});
+  }
+}
+
+export async function autoFillTool(url: string) {
+  const websiteUrl = normalizeUrl(url);
+  const urlObj = new URL(websiteUrl);
+  let html = "";
+
+  try {
+    const response = await fetch(websiteUrl, {
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (compatible; SaaSDanceBot/1.0; +https://saasdance.local)",
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    html = await response.text();
+  } catch {
+    html = "";
+  }
+
+  const title =
+    getMetaContent(html, /<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["'][^>]*>/i) ||
+    getMetaContent(html, /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:site_name["'][^>]*>/i) ||
+    getMetaContent(html, /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["'][^>]*>/i) ||
+    getMetaContent(html, /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["'][^>]*>/i) ||
+    getMetaContent(html, /<title[^>]*>([^<]+)<\/title>/i) ||
+    urlObj.hostname.replace(/^www\./, "");
+
+  const description =
+    getMetaContent(html, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i) ||
+    getMetaContent(html, /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["'][^>]*>/i) ||
+    getMetaContent(html, /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["'][^>]*>/i) ||
+    "";
+
+  const iconHref =
+    getMetaContent(html, /<link[^>]+rel=["'][^"']*(?:apple-touch-icon|shortcut icon|icon)[^"']*["'][^>]+href=["']([^"']+)["'][^>]*>/i) ||
+    getMetaContent(html, /<link[^>]+href=["']([^"']+)["'][^>]+rel=["'][^"']*(?:apple-touch-icon|shortcut icon|icon)[^"']*["'][^>]*>/i);
+
+  const logo =
+    resolveUrl(iconHref, websiteUrl) ||
+    `https://www.google.com/s2/favicons?domain=${encodeURIComponent(
+      urlObj.hostname
+    )}&sz=128`;
+
+  const appImage = await captureHomepageScreenshot(websiteUrl);
+
+  return {
+    name: title.replace(/\s+/g, " ").trim(),
+    url: websiteUrl,
+    tagline: description || `${title.replace(/\s+/g, " ").trim()} helps people discover and use this tool.`,
+    category: inferCategory(`${title} ${description} ${urlObj.hostname}`),
+    logo,
+    appImage,
+  };
+}
+
 export async function getSiteMetadata(siteKey: string) {
+  if (!AppConfig.mongoUri) {
+    const site = seedSites.find((item) => item.siteKey === siteKey);
+
+    if (!site) {
+      return null;
+    }
+
+    return {
+      title: site.name,
+      description: site.metaDesceription || site.desceription,
+      keywords: site.metaKeywords,
+    };
+  }
+
   try {
     await dbConnect();
 
@@ -290,6 +488,24 @@ export async function getSiteMetadata(siteKey: string) {
 }
 
 export async function getSiteDetailByKey(siteKey: string) {
+  if (!AppConfig.mongoUri) {
+    const site = seedSites.find((item) => item.siteKey === siteKey);
+
+    if (!site) {
+      return null;
+    }
+
+    return {
+      site,
+      suggests: seedSites
+        .filter((item) => item.siteKey !== siteKey)
+        .filter((item) =>
+          item.categories.some((category) => site.categories.includes(category))
+        )
+        .slice(0, 4),
+    };
+  }
+
   try {
     await dbConnect();
 
@@ -715,6 +931,10 @@ export async function managerSearchCategories(data: CategorySearchForm) {
 }
 
 export async function getFeaturedCategories() {
+  if (!AppConfig.mongoUri) {
+    return seedCategories.filter((category) => category.featured);
+  }
+
   try {
     await dbConnect();
 
@@ -732,6 +952,28 @@ export async function getFeaturedCategories() {
 }
 
 export async function getAllCategories() {
+  if (!AppConfig.mongoUri) {
+    const usedCategoryNames = new Set(
+      seedSites.flatMap((site) => site.categories)
+    );
+    const usedCategories = seedCategories.filter((category) =>
+      usedCategoryNames.has(category.name)
+    );
+
+    return [
+      {
+        _id: "cat-root",
+        icon: "folder",
+        name: "All Categories",
+        featured: false,
+        weight: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        children: usedCategories,
+      },
+    ];
+  }
+
   try {
     await dbConnect();
     const categories = await CategoryModel.find({}).sort({
@@ -739,7 +981,23 @@ export async function getAllCategories() {
       name: 1,
     });
 
-    const plainCategories = categories.map(categoryToObject);
+    const usedCategoryIds = new Set(
+      (
+        await SiteModel.distinct("categories", {
+          state: SiteState.published,
+        })
+      ).map((id) => id.toString())
+    );
+
+    const plainCategories = categories
+      .map(categoryToObject)
+      .filter((category) => {
+        if (!category.parent) {
+          return true;
+        }
+
+        return usedCategoryIds.has(category._id);
+      });
 
     const topCategories = plainCategories.filter((cate) => !cate.parent);
     const secondaryCategories = plainCategories.filter((cate) => !!cate.parent);

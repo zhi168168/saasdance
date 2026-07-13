@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import Container from "@/components/common/container";
 import SiteGroup from "@/components/common/sites-group";
 import NavBar from "@/components/common/nav-bar";
+import LocalSiteDetail from "@/components/site/local-site-detail";
 import SiteDetail from "@/components/site/site-detail";
 import { getSiteDetailByKey, getSiteMetadata } from "@/lib/actions";
 
@@ -26,7 +27,11 @@ export default async function Page({ params }: { params: { site: string } }) {
   const site = await getSiteDetailByKey(params.site);
 
   if (!site) {
-    return null;
+    return (
+      <Container className="mt-4">
+        <LocalSiteDetail siteKey={params.site} />
+      </Container>
+    );
   }
 
   return (

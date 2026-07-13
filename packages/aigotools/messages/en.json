@@ -1,13 +1,13 @@
 {
   "header": {
-    "submit": "Submit",
+    "submit": "Submit for free",
     "login": "Login",
     "admin": "Admin",
     "dashboard": "Dashboard"
   },
   "footer": {
     "slogan": "Search 10000+ Useful AI Tools By What You Need",
-    "submitATool": "Submit a Tool",
+    "submitATool": "Submit for free",
     "aboutUs": "About Us",
     "contactUs": "Contact Us",
     "privacy": "Privacy",
@@ -32,7 +32,7 @@
     "more": "More +"
   },
   "metadata": {
-    "title": "aigotools.com",
+    "title": "SaaS Dance",
     "description": "AigoTools is a leading AI tools directory and search engine. AigoTools helps you discover the best AI tools,apps and services list and takes your personal and business productivity to the next level.",
     "keywords": "Open source AI tools directory,AI tools directory, AI tool list, AI tools search engine, artificial inteligence applications,top ai tools, best ai tools directory, best ai tools, ai tools list"
   },
@@ -61,17 +61,33 @@
     "loadFailed": "Load Failed"
   },
   "submit": {
-    "metadata": { "title": "Submit yout AI Tool" },
-    "title": "Submit yout AI Tool",
-    "subTitle": "Submit your website in one minute",
+    "metadata": { "title": "Submit Your Tool" },
+    "title": "Submit Your Tool",
+    "subTitle": "Launch on SaaS Dance and get discovered by makers",
+    "toolName": "Tool Name",
+    "toolNamePlaceholder": "My Awesome Tool",
+    "tagline": "Tagline",
+    "taglinePlaceholder": "A short description of what the tool does",
     "websiteName": "Website Name",
-    "websiteNamePlaceholder": "AigoTools",
-    "websiteUrl": "Website Url",
-    "websiteUrlPlaceholder": "https://aigotools.com",
-    "submit": "Submit",
-    "requireName": "Name is requireed",
-    "requireUrl": "Url is requireed",
-    "successSubmit": "Success Submit",
+    "websiteNamePlaceholder": "SaaS Dance",
+    "websiteUrl": "Website URL",
+    "websiteUrlPlaceholder": "https://example.com",
+    "autoFill": "Auto-fill",
+    "autoFillSuccess": "Auto-filled from website",
+    "autoFillFailed": "Auto-fill failed, please complete the form manually",
+    "category": "Category",
+    "categoryPlaceholder": "Select a category",
+    "imageHint": "Click or drag and drop images (Max 5MB each)",
+    "logo": "Logo",
+    "appImage": "App Image",
+    "optional": "(optional)",
+    "submit": "Submit for free",
+    "requireName": "Name is required",
+    "requireUrl": "URL is required",
+    "requireTagline": "Tagline is required",
+    "requireCategory": "Category is required",
+    "requireLogo": "Logo is required",
+    "successSubmit": "Submission received. Please wait for review; most tools are reviewed within 24 hours.",
     "failSubmit": "Fail to submit, please retry or contact us",
     "request": "Add {code} to your website homepage, and then you can submit your website successfully for free！"
   },

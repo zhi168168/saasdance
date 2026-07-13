@@ -7,12 +7,6 @@ declare global {
   var mongoose: any;
 }
 
-if (!AppConfig.mongoUri) {
-  throw new Error(
-    "Please define the MONGODB_URI environment variable inside .env.local"
-  );
-}
-
 let cached = global.mongoose;
 
 if (!cached) {
@@ -20,12 +14,19 @@ if (!cached) {
 }
 
 async function dbConnect() {
+  if (!AppConfig.mongoUri) {
+    throw new Error(
+      "Please define the MONGODB_URI environment variable inside .env.local"
+    );
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
   if (!cached.promise) {
     const opts: ConnectOptions = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 1500,
     };
 
     const connection = mongoose

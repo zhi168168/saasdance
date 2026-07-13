@@ -136,8 +136,12 @@ export default function ReviewTable() {
       <div className="mt-6 relative">
         <Table className="mt-6" shadow="sm">
           <TableHeader>
+            <TableColumn maxWidth={120}>Logo</TableColumn>
+            <TableColumn maxWidth={180}>App Image</TableColumn>
             <TableColumn>{t("siteName")}</TableColumn>
+            <TableColumn>Tagline</TableColumn>
             <TableColumn>{t("url")}</TableColumn>
+            <TableColumn>Category</TableColumn>
             <TableColumn>{t("state")}</TableColumn>
             <TableColumn>{t("userEmail")}</TableColumn>
             <TableColumn maxWidth={160}>{t("createdAt")}</TableColumn>
@@ -153,7 +157,30 @@ export default function ReviewTable() {
           >
             {searchResult.reviews.map((review) => (
               <TableRow key={review._id}>
+                <TableCell>
+                  {review.logo ? (
+                    <img
+                      alt={`${review.name} logo`}
+                      className="h-10 w-10 rounded-md object-contain"
+                      src={review.logo}
+                    />
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {review.appImage ? (
+                    <img
+                      alt={`${review.name} app screenshot`}
+                      className="h-16 w-28 rounded-md object-cover"
+                      src={review.appImage}
+                    />
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
                 <TableCell>{review.name}</TableCell>
+                <TableCell>{review.tagline || "-"}</TableCell>
                 <TableCell>
                   <Link
                     className="text-blue-500 hover:underline"
@@ -163,6 +190,7 @@ export default function ReviewTable() {
                     {review.url}
                   </Link>
                 </TableCell>
+                <TableCell>{review.category || "-"}</TableCell>
                 <TableCell>{t(review.state)}</TableCell>
                 <TableCell>{review.userEmail}</TableCell>
                 <TableCell>

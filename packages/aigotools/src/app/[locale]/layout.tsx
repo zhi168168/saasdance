@@ -43,22 +43,26 @@ export default async function LocaleLayout({
 }) {
   const messages = await getMessages();
 
-  return (
-    <ClerkProvider>
-      <html lang={locale}>
-        <body>
-          <main className="text-primary">
-            <NextIntlClientProvider messages={messages}>
-              <NextUIProvider aria-disabled>
-                <ThemeProvider attribute="class">
-                  <UseQueryProvider> {children}</UseQueryProvider>
-                  <ThemeToastContainer />
-                </ThemeProvider>
-              </NextUIProvider>
-            </NextIntlClientProvider>
-          </main>
-        </body>
-      </html>
-    </ClerkProvider>
+  const content = (
+    <html lang={locale}>
+      <body>
+        <main className="text-primary">
+          <NextIntlClientProvider messages={messages}>
+            <NextUIProvider aria-disabled>
+              <ThemeProvider attribute="class">
+                <UseQueryProvider> {children}</UseQueryProvider>
+                <ThemeToastContainer />
+              </ThemeProvider>
+            </NextUIProvider>
+          </NextIntlClientProvider>
+        </main>
+      </body>
+    </html>
+  );
+
+  return AppConfig.clerkEnabled ? (
+    <ClerkProvider>{content}</ClerkProvider>
+  ) : (
+    content
   );
 }

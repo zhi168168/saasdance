@@ -1,15 +1,9 @@
-import { useTranslations } from "next-intl";
-
-import DashboardTitle from "@/components/common/dashboard-title";
-import SitesTable from "@/components/site-manage/sites-table";
+import LocalAdminPlaceholder from "@/components/common/local-admin-placeholder";
 
 export default function SiteManage() {
-  const t = useTranslations("siteManage");
-
   return (
     <div className="p-6 w-full">
-      <DashboardTitle title={t("title")} />
-      <SitesTable />
+      <LocalAdminPlaceholder title="Site Manage" />
     </div>
   );
 }

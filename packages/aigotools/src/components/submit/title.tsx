@@ -11,16 +11,16 @@ export default function Title() {
   const t = useTranslations("submit");
 
   return (
-    <div className={clsx("mt-16 max-w-[1000px] mx-auto text-center")}>
+    <div className={clsx("mx-auto mt-8 max-w-[812px] text-left")}>
       <h2
         className={clsx(
           istokWeb.className,
-          "mt-10 sm:mt-16 text-3xl sm:text-5xl leading-[1.3] font-bold text-primary-800",
+          "text-3xl font-bold leading-tight text-primary-900 sm:text-4xl",
         )}
       >
         {t("title")}
       </h2>
-      <div className="text-sm sm:text-lg mt-2 font-normal text-primary-500">
+      <div className="mt-2 text-base font-normal text-primary-500 sm:text-lg">
         {t("subTitle")}
       </div>
     </div>

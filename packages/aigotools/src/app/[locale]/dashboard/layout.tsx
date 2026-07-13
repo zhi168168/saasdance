@@ -7,6 +7,7 @@ import Logo from "@/components/common/logo";
 import { ThemeSwitcher } from "@/components/common/theme-switcher";
 import { Link, usePathname } from "@/navigation";
 import LanguageSwitcher from "@/components/common/language-switcher";
+import { AppConfig } from "@/lib/config";
 
 export default function DashbpardLayout({
   children,
@@ -16,20 +17,13 @@ export default function DashbpardLayout({
   const pathname = usePathname();
   const t = useTranslations("dashboard");
 
-  const menus = [
-    {
-      title: t("siteManage"),
-      link: "/dashboard/site-manage",
-    },
+  const localMenus = [
     {
       title: t("reviewManage"),
       link: "/dashboard/review-manage",
     },
-    {
-      title: t("categoryManage"),
-      link: "/dashboard/category-manage",
-    },
   ];
+  const menus = localMenus;
 
   return (
     <div className="flex w-screen h-screen">
@@ -60,7 +54,7 @@ export default function DashbpardLayout({
           })}
         </div>
         <div className="flex items-center justify-between mt-6 gap-2">
-          <UserButton />
+          {AppConfig.clerkEnabled && <UserButton />}
           <div className="flex-1" />
           <LanguageSwitcher />
           <ThemeSwitcher />

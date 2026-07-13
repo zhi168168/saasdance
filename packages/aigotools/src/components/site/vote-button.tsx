@@ -10,8 +10,34 @@ import clsx from "clsx";
 
 import { Site } from "@/models/site";
 import { isUserUpVoteSite, triggerUpvoteSite } from "@/lib/actions";
+import { AppConfig } from "@/lib/config";
 
 export default function VoteButton({ site }: { site: Site }) {
+  if (!AppConfig.clerkEnabled) {
+    return <PublicVoteButton site={site} />;
+  }
+
+  return <AuthenticatedVoteButton site={site} />;
+}
+
+function PublicVoteButton({ site }: { site: Site }) {
+  const t = useTranslations("site");
+
+  return (
+    <Button
+      className="w-56 font-semibold"
+      color="success"
+      radius="sm"
+      variant="bordered"
+    >
+      <ThumbsUpIcon size={14} strokeWidth={3} />
+      {t("upvote")}
+      {site.voteCount > 0 && <span>{site.voteCount}</span>}
+    </Button>
+  );
+}
+
+function AuthenticatedVoteButton({ site }: { site: Site }) {
   const t = useTranslations("site");
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [voteCount, setVoteCount] = useState(site.voteCount);

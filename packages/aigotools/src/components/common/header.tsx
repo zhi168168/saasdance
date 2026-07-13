@@ -1,6 +1,6 @@
 "use client";
 import { useTranslations, useLocale } from "next-intl";
-import { Github, LogOut } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import clsx from "clsx";
 import {
   Avatar,
@@ -27,6 +27,42 @@ import { AppConfig } from "@/lib/config";
 import { Link } from "@/navigation";
 
 export default function Header({ className }: { className?: string }) {
+  if (!AppConfig.clerkEnabled) {
+    return <PublicHeader className={className} />;
+  }
+
+  return <AuthenticatedHeader className={className} />;
+}
+
+function PublicHeader({ className }: { className?: string }) {
+  return (
+    <Container
+      className={clsx(
+        "flex items-center justify-between h-20 sm:h-24",
+        className
+      )}
+    >
+      <Logo />
+      <div className="flex items-center gap-2 sm:gap-4">
+        <LanguageSwitcher />
+        <ThemeSwitcher />
+        <Link href={"/submit"}>
+          <Button className="font-bold" color="primary" size="sm">
+            <Plus size={15} strokeWidth={3} />
+            Submit for free
+          </Button>
+        </Link>
+        <Link href={"/dashboard/review-manage"}>
+          <Button className="font-bold" size="sm" variant="bordered">
+            Review Queue
+          </Button>
+        </Link>
+      </div>
+    </Container>
+  );
+}
+
+function AuthenticatedHeader({ className }: { className?: string }) {
   const t = useTranslations("header");
 
   const locale = useLocale();
@@ -51,9 +87,6 @@ export default function Header({ className }: { className?: string }) {
     >
       <Logo />
       <div className="flex items-center gap-2 sm:gap-4">
-        <Link href={"https://github.com/someu/aigotools"} target="_blank">
-          <Github className="text-primary cursor-pointer" size={16} />
-        </Link>
         <LanguageSwitcher />
         <ThemeSwitcher />
         <SignedOut>

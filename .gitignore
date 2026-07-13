@@ -3,3 +3,5 @@
 !.volumes/**/.gitkeep
 node_modules
 .DS_Store
+packages/aigotools/dev.log
+packages/aigotools/public/autofill-screenshots/

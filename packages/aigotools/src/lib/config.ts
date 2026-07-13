@@ -4,15 +4,32 @@ export const AppConfig = {
   appGeneratorUrl: (process.env.NEXT_PUBLIC_APP_GENERATOR_URL as string) || "",
   siteUrl: (process.env.NEXT_PUBLIC_APP_URL as string) || "",
   siteName: (process.env.NEXT_PUBLIC_APP_NAME as string) || "",
+  localAdminPassword:
+    (process.env.LOCAL_ADMIN_PASSWORD as string) || "admin123",
+  localDemoMode:
+    process.env.LOCAL_DEMO_MODE === "true" ||
+    process.env.NEXT_PUBLIC_LOCAL_DEMO_MODE === "true",
 
   // clerk
+  clerkPublishableKey:
+    (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string) || "",
+  clerkEnabled: Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+      !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.endsWith("_xxx") &&
+      process.env.CLERK_SECRET_KEY &&
+      !process.env.CLERK_SECRET_KEY.endsWith("_xxx"),
+  ),
   debugClerk: process.env.CLERK_DEBUG === "true",
   manageUsers: (process.env.NEXT_PUBLIC_MANAGER_USER?.split(",") || []).filter(
     Boolean
   ),
 
   // mongo
-  mongoUri: (process.env.MONGODB_URI as string) || "",
+  mongoUri:
+    process.env.LOCAL_DEMO_MODE === "true" ||
+    process.env.NEXT_PUBLIC_LOCAL_DEMO_MODE === "true"
+      ? ""
+      : (process.env.MONGODB_URI as string) || "",
   // image storage
   imageStorage: process.env.NEXT_PUBLIC_IMAGE_STORAGE as "minio" | "s3" | "cos",
 
