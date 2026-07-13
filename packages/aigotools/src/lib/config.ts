@@ -1,3 +1,7 @@
+const clerkProxyUrl = (
+  (process.env.NEXT_PUBLIC_CLERK_PROXY_URL as string) || ""
+).replace(/\/__clerk\/?$/, "/api/__clerk");
+
 export const AppConfig = {
   // app
   appGenerator: (process.env.NEXT_PUBLIC_APP_GENERATOR as string) || "",
@@ -13,7 +17,7 @@ export const AppConfig = {
   // clerk
   clerkPublishableKey:
     (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string) || "",
-  clerkProxyUrl: (process.env.NEXT_PUBLIC_CLERK_PROXY_URL as string) || "",
+  clerkProxyUrl,
   clerkJsUrl:
     (process.env.NEXT_PUBLIC_CLERK_JS_URL as string) ||
     "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
