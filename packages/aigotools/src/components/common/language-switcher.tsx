@@ -31,7 +31,9 @@ export default function LanguageSwitcher() {
             return;
           }
 
-          router.replace(`${pathname}?${searchParams.toString()}`, {
+          const queryString = searchParams?.toString();
+
+          router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
             locale: targetlocale,
           });
         }}

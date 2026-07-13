@@ -16,8 +16,8 @@ import { Site } from "@/models/site";
 
 export default function InfiniteSearch() {
   const searchParams = useSearchParams();
-  const search = decodeURIComponent(searchParams.get("s") || "");
-  const category = decodeURIComponent(searchParams.get("c") || "");
+  const search = decodeURIComponent(searchParams?.get("s") || "");
+  const category = decodeURIComponent(searchParams?.get("c") || "");
   const t = useTranslations("search");
 
   const {
