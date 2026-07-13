@@ -8,6 +8,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import ThemeToastContainer from "@/components/common/theme-toast-container";
 import { AppConfig } from "@/lib/config";
 import UseQueryProvider from "@/components/common/use-query-provider";
+import { emailOnlyClerkAppearance } from "@/lib/clerk-appearance";
 
 export async function generateMetadata({
   params: { locale },
@@ -62,6 +63,7 @@ export default async function LocaleLayout({
 
   return AppConfig.clerkEnabled ? (
     <ClerkProvider
+      appearance={emailOnlyClerkAppearance}
       clerkJSUrl={AppConfig.clerkJsUrl}
       proxyUrl={AppConfig.clerkProxyUrl || undefined}
     >
