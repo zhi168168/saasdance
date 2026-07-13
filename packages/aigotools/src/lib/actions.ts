@@ -357,9 +357,9 @@ function inferCategory(text: string) {
 async function captureHomepageScreenshot(websiteUrl: string) {
   let browser: Awaited<ReturnType<typeof import("playwright").chromium.launch>> | null =
     null;
-  const fallbackScreenshotUrl = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(
+  const fallbackScreenshotUrl = `https://api.microlink.io/?url=${encodeURIComponent(
     websiteUrl
-  )}?w=1440`;
+  )}&screenshot=true&embed=screenshot.url`;
 
   try {
     const { chromium } = await import("playwright");
