@@ -13,14 +13,14 @@ const istokWeb = Istok_Web({
 
 export default function Logo({ className }: { className?: string }) {
   return (
-    <Link className="inline-flex items-center gap-2" href={"/"}>
+    <Link className="inline-flex items-center gap-2.5" href={"/"}>
       <Image
         priority
         alt=""
-        className="h-7 w-7 sm:h-9 sm:w-9 rounded-md"
-        height={36}
-        src="/icon.png"
-        width={36}
+        className="h-7 w-7 sm:h-10 sm:w-10"
+        height={40}
+        src="/brand-mark.png"
+        width={40}
       />
       <h1
         className={clsx(
