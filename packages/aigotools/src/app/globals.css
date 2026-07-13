@@ -12,3 +12,12 @@
     transition: background-color var(--transition-duration), color var(--transition-duration);
   }
 }
+
+@layer components {
+  .signup-email-only .cl-formField:has(input[name="firstName"]),
+  .signup-email-only .cl-formField:has(input[name="lastName"]),
+  .signup-email-only .cl-formFieldRow:has(input[name="firstName"]),
+  .signup-email-only .cl-formFieldRow:has(input[name="lastName"]) {
+    display: none;
+  }
+}

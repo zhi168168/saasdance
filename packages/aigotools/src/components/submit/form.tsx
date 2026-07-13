@@ -303,7 +303,28 @@ export default function Form() {
 
         saveLocalItems(localReviewsKey, [review, ...getLocalItems(localReviewsKey)]);
         saveLocalItems(localSitesKey, [site, ...getLocalItems(localSitesKey)]);
-        toast.success(t("successSubmit"));
+        toast.success(
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold leading-5 text-slate-950">
+              Submission received
+            </p>
+            <p className="text-sm leading-5 text-slate-600">
+              Please wait for review. Most tools are reviewed within 24 hours.
+            </p>
+          </div>,
+          {
+            ariaLabel: t("successSubmit"),
+            icon: (
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                <Check
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5"
+                  strokeWidth={3}
+                />
+              </span>
+            ),
+          },
+        );
         setName("");
         setUrl("");
         setTagline("");

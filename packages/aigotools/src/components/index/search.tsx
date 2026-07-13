@@ -111,13 +111,11 @@ export default function Search({
         >
           <Input
             classNames={{
-              input:
-                "text-center font-semibold placeholder:transition-all placeholder:text-primary-300 placeholder:font-semibold group-hover:placeholder:text-primary-400 group-data-[focus=true]:placeholder:text-primary-400",
+              input: "text-center font-semibold",
               mainWrapper: "group",
               inputWrapper: "!border-primary-900",
             }}
             endContent={history}
-            placeholder={t("searchPlaceholder")}
             radius="full"
             size="lg"
             startContent={
