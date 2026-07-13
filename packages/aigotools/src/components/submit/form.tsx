@@ -313,7 +313,6 @@ export default function Form() {
             </p>
           </div>,
           {
-            ariaLabel: t("successSubmit"),
             icon: (
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
                 <Check
