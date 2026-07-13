@@ -29,16 +29,38 @@ function handleIntl(req: Parameters<typeof intlMiddleware>[0]) {
   return intlMiddleware(req);
 }
 
+function redirectToLocalSignIn(req: Parameters<typeof intlMiddleware>[0]) {
+  const signInUrl = new URL("/sign-in", req.url);
+
+  signInUrl.searchParams.set("redirect_url", req.nextUrl.href);
+
+  return NextResponse.redirect(signInUrl);
+}
+
 function createProtectedRouteMiddleware() {
   return clerkMiddleware(
     (auth, req) => {
-    if (isUserRoute(req)) auth().protect();
+      const { userId } = auth();
+
+      if (isUserRoute(req) && !userId) {
+        return redirectToLocalSignIn(req);
+      }
 
       if (isManageRoute(req)) {
-        const { userId, redirectToSignIn } = auth();
+        if (!userId) {
+          return redirectToLocalSignIn(req);
+        }
 
-        if (!userId || !AppConfig.manageUsers.includes(userId)) {
-          return redirectToSignIn();
+        if (!AppConfig.manageUsers.includes(userId)) {
+          return new NextResponse(
+            "Access denied. Your account is signed in, but it is not listed in NEXT_PUBLIC_MANAGER_USER.",
+            {
+              status: 403,
+              headers: {
+                "content-type": "text/plain; charset=utf-8",
+              },
+            }
+          );
         }
       }
 
