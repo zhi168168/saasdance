@@ -1,6 +1,7 @@
 import createMiddleware from "next-intl/middleware";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 
 import { localePrefix, locales } from "./navigation";
 import { AvailableLocales } from "./lib/locales";
@@ -23,10 +24,23 @@ function handleIntl(req: Parameters<typeof intlMiddleware>[0]) {
   const nextPathname = req.nextUrl.pathname;
 
   if (/^\/(api|trpc|sitemap)/.test(nextPathname)) {
-    return;
+    return NextResponse.next();
   }
 
   return intlMiddleware(req);
+}
+
+function isAuthFlowRoute(pathname: string) {
+  return (
+    pathname === "/sign-in" ||
+    pathname.startsWith("/sign-in/") ||
+    pathname === "/sign-up" ||
+    pathname.startsWith("/sign-up/") ||
+    /^\/[^/]+\/sign-in(\/|$)/.test(pathname) ||
+    /^\/[^/]+\/sign-up(\/|$)/.test(pathname) ||
+    pathname.startsWith("/api/__clerk") ||
+    pathname.startsWith("/__clerk")
+  );
 }
 
 function redirectToLocalSignIn(req: Parameters<typeof intlMiddleware>[0]) {
@@ -68,9 +82,6 @@ function createProtectedRouteMiddleware() {
     },
     {
       debug: AppConfig.debugClerk,
-      proxyUrl: AppConfig.clerkProxyUrl || undefined,
-      signInUrl: "/sign-in",
-      signUpUrl: "/sign-up",
     }
   );
 }
@@ -99,9 +110,19 @@ function publicOnlyMiddleware(req: Parameters<typeof intlMiddleware>[0]) {
   return handleIntl(req);
 }
 
-export default AppConfig.clerkEnabled
-  ? createProtectedRouteMiddleware()
-  : publicOnlyMiddleware;
+const protectedRouteMiddleware = createProtectedRouteMiddleware();
+
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
+  if (!AppConfig.clerkEnabled) {
+    return publicOnlyMiddleware(req);
+  }
+
+  if (isAuthFlowRoute(req.nextUrl.pathname)) {
+    return handleIntl(req);
+  }
+
+  return protectedRouteMiddleware(req, event);
+}
 
 export const config = {
   matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
