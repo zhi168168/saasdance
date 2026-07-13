@@ -40,12 +40,6 @@ export default function SiteOperation({
         return false;
       }
 
-      if (site.state !== SiteState.published && !site.badgeVerified) {
-        toast.error(t("publishRequiresBadge"));
-
-        return false;
-      }
-
       try {
         setOperationing(true);
 

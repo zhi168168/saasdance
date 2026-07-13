@@ -61,12 +61,6 @@ export default function PublishedSitesTable() {
         return;
       }
 
-      if (site.state !== SiteState.published && !site.badgeVerified) {
-        toast.error(t("publishRequiresBadge"));
-
-        return;
-      }
-
       try {
         setUpdating(site._id);
 

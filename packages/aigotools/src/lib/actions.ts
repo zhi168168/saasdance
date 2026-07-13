@@ -842,12 +842,6 @@ export async function triggerSitePublish(site: Site) {
         $set: { state: SiteState.unpublished, updatedAt: Date.now() },
       });
     } else {
-      const currentSite = await SiteModel.findById(site._id);
-
-      if (!currentSite?.badgeVerified) {
-        throw new Error("Badge must be verified before publishing");
-      }
-
       await SiteModel.findByIdAndUpdate(site._id, {
         $set: { state: SiteState.published, updatedAt: Date.now() },
       });

@@ -133,7 +133,6 @@
     "unpublish": "Unpublish",
     "published": "Published",
     "unpublished": "Unpublished",
-    "publishRequiresBadge": "Verify the badge before publishing",
     "failTriggerPublish": "Update publish state failed",
     "processStage": "Process Stage",
     "pending": "Pending",
