@@ -18,6 +18,59 @@ async function readRawBody(req: NextApiRequest) {
   return Buffer.concat(chunks);
 }
 
+function splitSetCookieHeader(header: string) {
+  return header
+    .split(/,(?=\s*[^;,\s]+=)/g)
+    .map((cookie) => cookie.trim())
+    .filter(Boolean);
+}
+
+function getResponseSetCookies(response: Response) {
+  const headers = response.headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+  const setCookies = headers.getSetCookie?.();
+
+  if (setCookies?.length) {
+    return setCookies;
+  }
+
+  const header = response.headers.get("set-cookie");
+
+  return header ? splitSetCookieHeader(header) : [];
+}
+
+function getCookieDomain(req: NextApiRequest) {
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const rawHost = Array.isArray(forwardedHost)
+    ? forwardedHost[0]
+    : forwardedHost || req.headers.host || "";
+  const host = rawHost.split(",")[0].trim().split(":")[0].toLowerCase();
+
+  if (host === "saasdance.com" || host.endsWith(".saasdance.com")) {
+    return ".saasdance.com";
+  }
+
+  return "";
+}
+
+function rewriteSetCookieDomain(cookie: string, domain: string) {
+  const parts = cookie
+    .split(";")
+    .map((part, index) => {
+      const trimmed = part.trim();
+
+      if (index > 0 && trimmed.toLowerCase().startsWith("domain=")) {
+        return domain ? `Domain=${domain}` : "";
+      }
+
+      return trimmed;
+    })
+    .filter(Boolean);
+
+  return parts.join("; ");
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -84,7 +137,6 @@ export default async function handler(
       "cache-control",
       "content-type",
       "location",
-      "set-cookie",
     ];
 
     safeHeaders.forEach((key) => {
@@ -94,6 +146,17 @@ export default async function handler(
         res.setHeader(key, value);
       }
     });
+    const setCookies = getResponseSetCookies(response);
+
+    if (setCookies.length) {
+      const cookieDomain = getCookieDomain(req);
+
+      res.setHeader(
+        "set-cookie",
+        setCookies.map((cookie) => rewriteSetCookieDomain(cookie, cookieDomain))
+      );
+    }
+
     res.setHeader("access-control-allow-origin", "*");
     res.status(response.status).send(body);
   } catch (error) {
