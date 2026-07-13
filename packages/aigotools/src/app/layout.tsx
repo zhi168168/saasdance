@@ -3,11 +3,19 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import clsx from "clsx";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Viewport } from "next";
+import { Metadata, Viewport } from "next";
 
 import { AppConfig } from "../lib/config";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
+};
 
 export const viewport: Viewport = {
   width: "device-width",
