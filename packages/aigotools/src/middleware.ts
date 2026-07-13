@@ -68,6 +68,9 @@ function createProtectedRouteMiddleware() {
     },
     {
       debug: AppConfig.debugClerk,
+      proxyUrl: AppConfig.clerkProxyUrl || undefined,
+      signInUrl: "/sign-in",
+      signUpUrl: "/sign-up",
     }
   );
 }
