@@ -1,10 +1,4 @@
-import {
-  Button,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-} from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
@@ -12,7 +6,6 @@ import { Ban, Bone, Check } from "lucide-react";
 
 import { ReviewState } from "@/lib/constants";
 import { Review } from "@/models/review";
-import OperationIcon from "@/components/common/operation-icon";
 import { updateReviewState } from "@/lib/actions";
 
 export default function ReviewOperation({
@@ -48,48 +41,45 @@ export default function ReviewOperation({
     [handleSearch, updating, t],
   );
 
-  const menuItems = [];
-
   if (review.state === ReviewState.pending) {
-    menuItems.push(
-      <DropdownItem
-        className="text-danger-500"
-        startContent={<Ban size={14} />}
-        onClick={() => handleUpdateReviewState(review, ReviewState.rejected)}
-      >
-        {t("reject")}
-      </DropdownItem>,
-      <DropdownItem
-        className="text-success-500"
-        startContent={<Check size={14} />}
-        onClick={() => handleUpdateReviewState(review, ReviewState.approved)}
-      >
-        {t("approve")}
-      </DropdownItem>,
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          color="success"
+          isLoading={updating}
+          size="sm"
+          startContent={!updating && <Check size={14} />}
+          variant="flat"
+          onPress={() => handleUpdateReviewState(review, ReviewState.approved)}
+        >
+          {t("approve")}
+        </Button>
+        <Button
+          color="danger"
+          isDisabled={updating}
+          size="sm"
+          startContent={<Ban size={14} />}
+          variant="flat"
+          onPress={() => handleUpdateReviewState(review, ReviewState.rejected)}
+        >
+          {t("reject")}
+        </Button>
+      </div>
     );
   } else if (review.state === ReviewState.rejected) {
-    menuItems.push(
-      <DropdownItem
-        className="text-secondary-500"
-        startContent={<Bone size={14} />}
-        onClick={() => handleUpdateReviewState(review, ReviewState.pending)}
+    return (
+      <Button
+        color="secondary"
+        isLoading={updating}
+        size="sm"
+        startContent={!updating && <Bone size={14} />}
+        variant="flat"
+        onPress={() => handleUpdateReviewState(review, ReviewState.pending)}
       >
         {t("withdraw")}
-      </DropdownItem>,
+      </Button>
     );
   }
 
-  return (
-    <Dropdown
-      classNames={{ content: "!min-w-24 bg-primary-100 shadow" }}
-      isDisabled={updating}
-    >
-      <DropdownTrigger>
-        <Button isIconOnly isLoading={updating} size="sm">
-          <OperationIcon className="w-4 h-4" />
-        </Button>
-      </DropdownTrigger>
-      <DropdownMenu>{menuItems}</DropdownMenu>
-    </Dropdown>
-  );
+  return <span className="text-xs text-primary-400">-</span>;
 }

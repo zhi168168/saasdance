@@ -1103,28 +1103,24 @@ export async function getAllCategories() {
       .map(categoryToObject)
       .filter((category) => {
         if (!category.parent) {
-          return true;
+          return usedCategoryIds.has(category._id);
         }
 
         return usedCategoryIds.has(category._id);
       });
 
-    const topCategories = plainCategories.filter((cate) => !cate.parent);
-    const secondaryCategories = plainCategories.filter((cate) => !!cate.parent);
-
-    const grouped = topCategories.map((category) => {
-      (category as any).children = secondaryCategories.filter(
-        (sec) => sec.parent === category._id
-      );
-
-      return category;
-    }) as Array<
-      Category & {
-        children: Array<Category>;
-      }
-    >;
-
-    return grouped.filter((c) => c.children.length);
+    return [
+      {
+        _id: "cat-root",
+        icon: "folder",
+        name: "All Categories",
+        featured: false,
+        weight: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        children: plainCategories,
+      },
+    ];
   } catch (error) {
     console.log("Get all cateogry error", error);
     throw error;

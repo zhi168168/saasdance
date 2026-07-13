@@ -94,7 +94,7 @@ export default function ReviewTable() {
   }, [searchParams]);
 
   return (
-    <div className="mt-4 relative py-4">
+    <div className="mt-4 relative py-4 text-sm">
       <div
         className="flex items-center justify-end gap-4"
         onSubmit={handleSearch}
@@ -134,7 +134,14 @@ export default function ReviewTable() {
         />
       </div>
       <div className="mt-6 relative">
-        <Table className="mt-6" shadow="sm">
+        <Table
+          className="mt-6"
+          classNames={{
+            th: "text-xs",
+            td: "text-sm py-2",
+          }}
+          shadow="sm"
+        >
           <TableHeader>
             <TableColumn maxWidth={120}>Logo</TableColumn>
             <TableColumn maxWidth={180}>App Image</TableColumn>
@@ -161,7 +168,7 @@ export default function ReviewTable() {
                   {review.logo ? (
                     <img
                       alt={`${review.name} logo`}
-                      className="h-10 w-10 rounded-md object-contain"
+                      className="h-8 w-8 rounded-md object-contain"
                       src={review.logo}
                     />
                   ) : (
@@ -172,15 +179,19 @@ export default function ReviewTable() {
                   {review.appImage ? (
                     <img
                       alt={`${review.name} app screenshot`}
-                      className="h-16 w-28 rounded-md object-cover"
+                      className="h-12 w-20 rounded-md object-cover"
                       src={review.appImage}
                     />
                   ) : (
                     "-"
                   )}
                 </TableCell>
-                <TableCell>{review.name}</TableCell>
-                <TableCell>{review.tagline || "-"}</TableCell>
+                <TableCell>
+                  <span className="line-clamp-2">{review.name}</span>
+                </TableCell>
+                <TableCell>
+                  <span className="line-clamp-3">{review.tagline || "-"}</span>
+                </TableCell>
                 <TableCell>
                   <Link
                     className="text-blue-500 hover:underline"

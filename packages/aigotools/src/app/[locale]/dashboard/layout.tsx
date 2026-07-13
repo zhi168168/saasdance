@@ -22,6 +22,10 @@ export default function DashbpardLayout({
       title: t("reviewManage"),
       link: "/dashboard/review-manage",
     },
+    {
+      title: t("siteManage"),
+      link: "/dashboard/site-manage",
+    },
   ];
   const menus = localMenus;
 
