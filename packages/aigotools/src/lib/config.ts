@@ -13,6 +13,10 @@ export const AppConfig = {
   // clerk
   clerkPublishableKey:
     (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string) || "",
+  clerkClientEnabled: Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+      !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.endsWith("_xxx")
+  ),
   clerkEnabled: Boolean(
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
       !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.endsWith("_xxx") &&

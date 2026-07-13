@@ -27,7 +27,7 @@ import { AppConfig } from "@/lib/config";
 import { Link } from "@/navigation";
 
 export default function Header({ className }: { className?: string }) {
-  if (!AppConfig.clerkEnabled) {
+  if (!AppConfig.clerkClientEnabled) {
     return <PublicHeader className={className} />;
   }
 
@@ -119,6 +119,16 @@ function AuthenticatedHeader({ className }: { className?: string }) {
               </Button>
             </Link>
           )}
+          <Button
+            className="font-semibold"
+            color="danger"
+            size="sm"
+            startContent={<LogOut size={14} strokeWidth={3} />}
+            variant="flat"
+            onPress={() => signOut()}
+          >
+            Logout
+          </Button>
           <Dropdown placement="bottom-end">
             <DropdownTrigger>
               <Avatar
