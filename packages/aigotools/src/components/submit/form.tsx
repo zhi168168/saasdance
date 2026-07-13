@@ -132,7 +132,6 @@ export default function Form() {
   const badgeBaseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "") ||
     "https://saasdance.com";
-  const badgeHtml = `<a href="${badgeBaseUrl}" target="_blank"><img src="${badgeBaseUrl}/badge/badge_light.png" alt="Featured on SaaSDance" width="200" height="54" /></a>`;
 
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
@@ -140,10 +139,13 @@ export default function Form() {
   const [category, setCategory] = useState("");
   const [logo, setLogo] = useState("");
   const [appImage, setAppImage] = useState("");
+  const [badgeTheme, setBadgeTheme] = useState<"light" | "dark">("light");
 
   const [submiting, setSubmiting] = useState(false);
   const [autoFilling, setAutoFilling] = useState(false);
   const [copiedBadge, setCopiedBadge] = useState(false);
+  const badgeImagePath = `/badge/badge_${badgeTheme}.png`;
+  const badgeHtml = `<a href="${badgeBaseUrl}" target="_blank"><img src="${badgeBaseUrl}${badgeImagePath}" alt="Featured on SaaSDance" width="200" height="54" /></a>`;
 
   const handleCopyBadge = async () => {
     try {
@@ -351,31 +353,59 @@ export default function Form() {
       </div>
 
       <div className="rounded-lg border border-primary-200 bg-background p-3 sm:p-4">
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm font-medium text-primary-600">
-            Add this badge to your homepage footer before review.
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="text-sm font-medium text-primary-600">
+              Add this badge to your homepage footer before review.
+            </div>
+            <div className="mt-3 inline-flex rounded-md border border-primary-200 bg-primary-50 p-1">
+              <Button
+                className="h-8 px-3 text-xs"
+                color={badgeTheme === "light" ? "primary" : "default"}
+                size="sm"
+                type="button"
+                variant={badgeTheme === "light" ? "solid" : "light"}
+                onPress={() => setBadgeTheme("light")}
+              >
+                Light
+              </Button>
+              <Button
+                className="h-8 px-3 text-xs"
+                color={badgeTheme === "dark" ? "primary" : "default"}
+                size="sm"
+                type="button"
+                variant={badgeTheme === "dark" ? "solid" : "light"}
+                onPress={() => setBadgeTheme("dark")}
+              >
+                Dark
+              </Button>
+            </div>
           </div>
-          <img
-            alt="Featured on SaaSDance"
-            className="h-[54px] w-[200px] object-contain"
-            src={`${badgeBaseUrl}/badge/badge_light.png`}
-          />
+          <div className="flex h-[64px] w-[220px] items-center justify-center rounded-md border border-primary-200 bg-primary-50">
+            <img
+              alt="Featured on SaaSDance"
+              className="h-[54px] w-[200px] object-contain"
+              src={badgeImagePath}
+            />
+          </div>
         </div>
-        <div className="flex gap-2 rounded-md border border-primary-200 bg-primary-50 p-2">
-          <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap px-2 py-2 text-xs text-primary-900">
-            {badgeHtml}
-          </code>
-          <Button
-            isIconOnly
-            aria-label="Copy badge code"
-            className="shrink-0"
-            size="sm"
-            type="button"
-            variant="flat"
-            onPress={handleCopyBadge}
-          >
-            {copiedBadge ? <Check size={15} /> : <Copy size={15} />}
-          </Button>
+        <div className="rounded-md border border-primary-200 bg-primary-50 p-2">
+          <div className="flex items-start gap-2">
+            <code className="min-w-0 flex-1 whitespace-pre-wrap break-all px-2 py-2 font-mono text-xs leading-5 text-primary-900">
+              {badgeHtml}
+            </code>
+            <Button
+              isIconOnly
+              aria-label="Copy badge code"
+              className="shrink-0"
+              size="sm"
+              type="button"
+              variant="flat"
+              onPress={handleCopyBadge}
+            >
+              {copiedBadge ? <Check size={15} /> : <Copy size={15} />}
+            </Button>
+          </div>
         </div>
       </div>
 
