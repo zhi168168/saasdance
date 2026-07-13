@@ -140,8 +140,8 @@ async function publishSiteFromReview(review: ReviewDocument, userId: string) {
     metaDesceription: review.tagline || "",
     state: SiteState.published,
     processStage: ProcessStage.success,
-    badgeVerified: true,
-    badgeVerifiedAt: now,
+    badgeVerified: false,
+    badgeVerifiedAt: 0,
     updatedAt: now,
   });
 
@@ -934,10 +934,6 @@ export async function updateReviewState(reviewId: string, state: ReviewState) {
     }
 
     if (state === ReviewState.approved) {
-      if (!(await fetchBadgeVerification(review.url))) {
-        throw new Error("Badge must be verified before approval");
-      }
-
       const site = await publishSiteFromReview(review, user.id);
 
       if (site) {
