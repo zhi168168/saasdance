@@ -112,6 +112,16 @@ async function fetchBadgeVerification(url: string) {
   return response.ok && hasSaasDanceBadge(html);
 }
 
+export async function verifySubmittedSiteBadge(url: string) {
+  try {
+    return await fetchBadgeVerification(url);
+  } catch (error) {
+    console.log("Verify submitted site badge error", error);
+
+    return false;
+  }
+}
+
 async function publishSiteFromReview(review: ReviewDocument, userId: string) {
   const urlObj = new URL(review.url);
   const categoryId = await findOrCreateCategoryId(review.category);

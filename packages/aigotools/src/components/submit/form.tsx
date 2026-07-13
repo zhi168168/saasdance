@@ -1,11 +1,11 @@
 "use client";
 import { Button, Input, Select, SelectItem } from "@nextui-org/react";
-import { Check, Copy, Globe2, Upload, WandSparkles } from "lucide-react";
+import { BadgeCheck, Check, Copy, Globe2, Upload, WandSparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { toast } from "react-toastify";
 
-import { autoFillTool, submitReview } from "@/lib/actions";
+import { autoFillTool, submitReview, verifySubmittedSiteBadge } from "@/lib/actions";
 import { uploadFormDataToCloudinary } from "@/lib/cloudinary";
 import { ReviewState, SiteState, ProcessStage } from "@/lib/constants";
 
@@ -142,8 +142,14 @@ export default function Form() {
   const [submiting, setSubmiting] = useState(false);
   const [autoFilling, setAutoFilling] = useState(false);
   const [copiedBadge, setCopiedBadge] = useState(false);
+  const [verifyingBadge, setVerifyingBadge] = useState(false);
+  const [badgeVerifiedUrl, setBadgeVerifiedUrl] = useState("");
   const badgeImagePath = `/badge/badge_${badgeTheme}.png`;
   const badgeHtml = `<a href="${badgeBaseUrl}" target="_blank"><img src="${badgeBaseUrl}${badgeImagePath}" alt="Featured on SaaSDance" width="200" height="54" /></a>`;
+  const normalizedUrl = url ? normalizeWebsiteUrl(url) : "";
+  const badgeVerified = Boolean(
+    normalizedUrl && badgeVerifiedUrl === normalizedUrl
+  );
 
   const handleCopyBadge = async () => {
     try {
@@ -168,6 +174,7 @@ export default function Form() {
 
       setName(data.name);
       setUrl(data.url);
+      setBadgeVerifiedUrl("");
       setTagline(data.tagline);
       setCategory(data.category);
       setLogo(data.logo);
@@ -177,6 +184,29 @@ export default function Form() {
       toast.error(t("autoFillFailed"));
     } finally {
       setAutoFilling(false);
+    }
+  };
+
+  const handleVerifyBadge = async () => {
+    if (!url) {
+      toast.error(t("requireUrl"));
+      return;
+    }
+
+    try {
+      setVerifyingBadge(true);
+      const websiteUrl = normalizeWebsiteUrl(url);
+      const verified = await verifySubmittedSiteBadge(websiteUrl);
+
+      if (verified) {
+        setBadgeVerifiedUrl(websiteUrl);
+        toast.success("Badge verified");
+      } else {
+        setBadgeVerifiedUrl("");
+        toast.error("Badge not found on this homepage");
+      }
+    } finally {
+      setVerifyingBadge(false);
     }
   };
 
@@ -201,6 +231,10 @@ export default function Form() {
       return;
     } else if (!logo) {
       toast.error(t("requireLogo"));
+
+      return;
+    } else if (!badgeVerified) {
+      toast.error("Please verify the SaaSDance badge before submitting");
 
       return;
     }
@@ -299,7 +333,10 @@ export default function Form() {
             startContent={<Globe2 className="text-primary-400" size={17} />}
             value={url}
             variant="bordered"
-            onValueChange={setUrl}
+            onValueChange={(value) => {
+              setUrl(value);
+              setBadgeVerifiedUrl("");
+            }}
           />
           <Button
             className="font-bold sm:h-14"
@@ -379,12 +416,28 @@ export default function Form() {
               </Button>
             </div>
           </div>
-          <div className="flex h-[64px] w-[220px] items-center justify-center rounded-md border border-primary-200 bg-primary-50">
-            <img
-              alt="Featured on SaaSDance"
-              className="h-[54px] w-[200px] object-contain"
-              src={badgeImagePath}
-            />
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <div className="flex h-[64px] w-[220px] items-center justify-center rounded-md border border-primary-200 bg-primary-50">
+              <img
+                alt="Featured on SaaSDance"
+                className="h-[54px] w-[200px] object-contain"
+                src={badgeImagePath}
+              />
+            </div>
+            <Button
+              className="font-semibold"
+              color={badgeVerified ? "success" : "primary"}
+              isLoading={verifyingBadge}
+              size="sm"
+              startContent={
+                verifyingBadge ? null : <BadgeCheck size={15} strokeWidth={2.5} />
+              }
+              type="button"
+              variant={badgeVerified ? "flat" : "solid"}
+              onPress={handleVerifyBadge}
+            >
+              {badgeVerified ? "Verified" : "Verify badge"}
+            </Button>
           </div>
         </div>
         <div className="rounded-md border border-primary-200 bg-primary-50 p-2">
@@ -429,6 +482,7 @@ export default function Form() {
       <Button
         className="font-bold"
         color="primary"
+        isDisabled={!badgeVerified}
         isLoading={submiting}
         size="lg"
         type="submit"
