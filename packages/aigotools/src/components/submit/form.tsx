@@ -1,6 +1,6 @@
 "use client";
 import { Button, Input, Select, SelectItem } from "@nextui-org/react";
-import { Globe2, Upload, WandSparkles } from "lucide-react";
+import { Check, Copy, Globe2, Upload, WandSparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { toast } from "react-toastify";
@@ -143,6 +143,18 @@ export default function Form() {
 
   const [submiting, setSubmiting] = useState(false);
   const [autoFilling, setAutoFilling] = useState(false);
+  const [copiedBadge, setCopiedBadge] = useState(false);
+
+  const handleCopyBadge = async () => {
+    try {
+      await navigator.clipboard.writeText(badgeHtml);
+      setCopiedBadge(true);
+      toast.success("Badge code copied");
+      window.setTimeout(() => setCopiedBadge(false), 1800);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
 
   const handleAutoFill = async () => {
     if (!url) {
@@ -339,12 +351,32 @@ export default function Form() {
       </div>
 
       <div className="rounded-lg border border-primary-200 bg-background p-3 sm:p-4">
-        <div className="mb-3 text-sm font-medium text-primary-600">
-          Add this badge to your homepage footer before review.
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm font-medium text-primary-600">
+            Add this badge to your homepage footer before review.
+          </div>
+          <img
+            alt="Featured on SaaSDance"
+            className="h-[54px] w-[200px] object-contain"
+            src={`${badgeBaseUrl}/badge/badge_light.png`}
+          />
         </div>
-        <pre className="overflow-x-auto rounded-md bg-primary-950 p-3 text-xs text-white">
-          <code>{badgeHtml}</code>
-        </pre>
+        <div className="flex gap-2 rounded-md border border-primary-200 bg-primary-50 p-2">
+          <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap px-2 py-2 text-xs text-primary-900">
+            {badgeHtml}
+          </code>
+          <Button
+            isIconOnly
+            aria-label="Copy badge code"
+            className="shrink-0"
+            size="sm"
+            type="button"
+            variant="flat"
+            onPress={handleCopyBadge}
+          >
+            {copiedBadge ? <Check size={15} /> : <Copy size={15} />}
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border border-primary-200 bg-background p-3 sm:p-4">
