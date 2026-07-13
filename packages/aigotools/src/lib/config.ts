@@ -14,6 +14,9 @@ export const AppConfig = {
   clerkPublishableKey:
     (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string) || "",
   clerkProxyUrl: (process.env.NEXT_PUBLIC_CLERK_PROXY_URL as string) || "",
+  clerkJsUrl:
+    (process.env.NEXT_PUBLIC_CLERK_JS_URL as string) ||
+    "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
   clerkClientEnabled: Boolean(
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
       !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.endsWith("_xxx")

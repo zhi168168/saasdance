@@ -61,7 +61,10 @@ export default async function LocaleLayout({
   );
 
   return AppConfig.clerkEnabled ? (
-    <ClerkProvider proxyUrl={AppConfig.clerkProxyUrl || undefined}>
+    <ClerkProvider
+      clerkJSUrl={AppConfig.clerkJsUrl}
+      proxyUrl={AppConfig.clerkProxyUrl || undefined}
+    >
       {content}
     </ClerkProvider>
   ) : (
