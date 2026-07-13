@@ -3,7 +3,14 @@ const createNextIntlPlugin = require("next-intl/plugin");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async rewrites() {
-    return [];
+    return {
+      beforeFiles: [
+        {
+          source: "/__clerk/:path*",
+          destination: "/api/__clerk/:path*",
+        },
+      ],
+    };
   },
   async redirects() {
     return [];

@@ -23,13 +23,19 @@ async function proxyClerkRequest(
         : await request.arrayBuffer(),
     redirect: "manual",
   });
+  const responseHeaders = new Headers(response.headers);
+
+  responseHeaders.set("access-control-allow-origin", "*");
 
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: response.headers,
+    headers: responseHeaders,
   });
 }
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export const GET = proxyClerkRequest;
 export const POST = proxyClerkRequest;
