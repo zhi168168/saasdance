@@ -8,7 +8,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
-import { Atom, Axe, Edit, StopCircle, Trash2 } from "lucide-react";
+import { Atom, Axe, BadgeCheck, Edit, StopCircle, Trash2 } from "lucide-react";
 
 import { Site } from "@/models/site";
 import { ProcessStage, SiteState } from "@/lib/constants";
@@ -17,6 +17,7 @@ import {
   dispatchSiteCrawl,
   stopSiteCrawl,
   triggerSitePublish,
+  verifySiteBadge,
 } from "@/lib/actions";
 import OperationIcon from "@/components/common/operation-icon";
 
@@ -54,6 +55,29 @@ export default function SiteOperation({
     },
     [handleSearch, operationing, t],
   );
+
+  const handleVerifyBadge = useCallback(async () => {
+    if (operationing) {
+      return false;
+    }
+
+    try {
+      setOperationing(true);
+      const verified = await verifySiteBadge(site._id);
+
+      if (verified) {
+        toast.success(t("badgeVerified"));
+      } else {
+        toast.error(t("badgeNotFound"));
+      }
+      handleSearch();
+    } catch (error) {
+      console.log(error);
+      toast.error(t("badgeVerifyFailed"));
+    } finally {
+      setOperationing(false);
+    }
+  }, [handleSearch, operationing, site._id, t]);
 
   const stopSite = useCallback(
     async (e: any) => {
@@ -125,6 +149,13 @@ export default function SiteOperation({
         </Button>
       </DropdownTrigger>
       <DropdownMenu>
+        <DropdownItem
+          className={site.badgeVerified ? "text-success-500" : "text-blue-500"}
+          startContent={<BadgeCheck size={14} />}
+          onClick={handleVerifyBadge}
+        >
+          {t("verifyBadge")}
+        </DropdownItem>
         <DropdownItem
           className={
             site.state === SiteState.published

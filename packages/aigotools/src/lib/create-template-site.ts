@@ -25,6 +25,8 @@ export const createTemplateSite = (site: Partial<Site> = {}) => {
     metaKeywords: [],
     metaDesceription: "",
     searchSuggestWords: [],
+    badgeVerified: false,
+    badgeVerifiedAt: 0,
     state: SiteState.unpublished,
     createdAt: Date.now(),
     updatedAt: Date.now(),

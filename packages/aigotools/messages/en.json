@@ -147,7 +147,14 @@
     "stop": "Stop",
     "stopAll": "Stop All",
     "delete": "Delete",
-    "deleteFailed": "Delete Failed"
+    "deleteFailed": "Delete Failed",
+    "badge": "Badge",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "verifyBadge": "Verify Badge",
+    "badgeVerified": "Badge verified",
+    "badgeNotFound": "Badge not found on the homepage",
+    "badgeVerifyFailed": "Badge verification failed"
   },
   "siteEdit": {
     "newTitle": "New",

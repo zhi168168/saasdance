@@ -31,6 +31,12 @@ const categories = [
 const localReviewsKey = "saasDanceLocalReviews";
 const localSitesKey = "saasDanceLocalSites";
 
+function normalizeWebsiteUrl(value: string) {
+  const trimmed = value.trim();
+
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 function getLocalItems<T>(key: string): T[] {
   try {
     return JSON.parse(window.localStorage.getItem(key) || "[]");
@@ -123,6 +129,10 @@ function UploadBox({
 
 export default function Form() {
   const t = useTranslations("submit");
+  const badgeBaseUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "") ||
+    "https://saasdance.com";
+  const badgeHtml = `<a href="${badgeBaseUrl}" target="_blank"><img src="${badgeBaseUrl}/badge/badge_light.png" alt="Featured on SaaSDance" width="200" height="54" /></a>`;
 
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
@@ -187,9 +197,10 @@ export default function Form() {
         return;
       }
       setSubmiting(true);
+      const websiteUrl = normalizeWebsiteUrl(url);
       const submited = await submitReview({
         name,
-        url,
+        url: websiteUrl,
         tagline,
         category,
         logo,
@@ -198,11 +209,11 @@ export default function Form() {
 
       if (submited) {
         const now = Date.now();
-        const siteKey = new URL(url).hostname.replace(/[^\w]/g, "_");
+        const siteKey = new URL(websiteUrl).hostname.replace(/[^\w]/g, "_");
         const review = {
           _id: `local-review-${now}`,
           name,
-          url,
+          url: websiteUrl,
           tagline,
           category,
           logo,
@@ -216,7 +227,7 @@ export default function Form() {
         const site = {
           _id: `local-site-${now}`,
           userId: "local-user",
-          url,
+          url: websiteUrl,
           siteKey,
           featured: false,
           weight: 0,
@@ -236,6 +247,8 @@ export default function Form() {
           metaKeywords: [],
           metaDesceription: tagline,
           searchSuggestWords: [],
+          badgeVerified: false,
+          badgeVerifiedAt: 0,
           state: SiteState.unpublished,
           processStage: ProcessStage.success,
           createdAt: now,
@@ -323,6 +336,15 @@ export default function Form() {
             <SelectItem key={item}>{item}</SelectItem>
           ))}
         </Select>
+      </div>
+
+      <div className="rounded-lg border border-primary-200 bg-background p-3 sm:p-4">
+        <div className="mb-3 text-sm font-medium text-primary-600">
+          Add this badge to your homepage footer before review.
+        </div>
+        <pre className="overflow-x-auto rounded-md bg-primary-950 p-3 text-xs text-white">
+          <code>{badgeHtml}</code>
+        </pre>
       </div>
 
       <div className="rounded-lg border border-primary-200 bg-background p-3 sm:p-4">

@@ -140,7 +140,14 @@
     "stop": "停止",
     "stopAll": "停止所有",
     "delete": "删除",
-    "deleteFailed": "删除失败"
+    "deleteFailed": "删除失败",
+    "badge": "徽章",
+    "verified": "已验证",
+    "unverified": "未验证",
+    "verifyBadge": "验证徽章",
+    "badgeVerified": "徽章验证成功",
+    "badgeNotFound": "首页没有找到 SaaSDance 徽章",
+    "badgeVerifyFailed": "徽章验证失败"
   },
   "siteEdit": {
     "newTitle": "新建",

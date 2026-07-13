@@ -76,6 +76,42 @@ function siteKeyFromUrl(url: string) {
   return urlObj.hostname.replace(/[^\w]/g, "_");
 }
 
+function getBadgeBaseUrl() {
+  return (AppConfig.siteUrl || "https://saasdance.com").replace(/\/+$/, "");
+}
+
+function getBadgeHost() {
+  return new URL(getBadgeBaseUrl()).hostname.replace(/^www\./, "");
+}
+
+function hasSaasDanceBadge(html: string) {
+  const normalized = html.toLowerCase();
+  const badgeHost = getBadgeHost().toLowerCase();
+
+  return (
+    normalized.includes(badgeHost) &&
+    (normalized.includes("featured on saasdance") ||
+      normalized.includes("/badge/badge_light.svg") ||
+      normalized.includes("/badge/badge_dark.svg") ||
+      normalized.includes("/badge/badge_light.png") ||
+      normalized.includes("/badge/badge_dark.png"))
+  );
+}
+
+async function fetchBadgeVerification(url: string) {
+  const response = await fetch(normalizeUrl(url), {
+    headers: {
+      "user-agent":
+        "Mozilla/5.0 (compatible; SaaSDanceBot/1.0; +https://saasdance.com)",
+    },
+    redirect: "follow",
+    signal: AbortSignal.timeout(10000),
+  });
+  const html = await response.text();
+
+  return response.ok && hasSaasDanceBadge(html);
+}
+
 async function publishSiteFromReview(review: ReviewDocument, userId: string) {
   const urlObj = new URL(review.url);
   const categoryId = await findOrCreateCategoryId(review.category);
@@ -94,6 +130,8 @@ async function publishSiteFromReview(review: ReviewDocument, userId: string) {
     metaDesceription: review.tagline || "",
     state: SiteState.published,
     processStage: ProcessStage.success,
+    badgeVerified: true,
+    badgeVerifiedAt: now,
     updatedAt: now,
   });
 
@@ -353,6 +391,8 @@ export async function submitReview({
   appImage?: string;
 }) {
   try {
+    const websiteUrl = normalizeUrl(url);
+
     if (!AppConfig.clerkEnabled || !AppConfig.mongoUri) {
       return true;
     }
@@ -366,7 +406,7 @@ export async function submitReview({
 
     await ReviewModel.create({
       name,
-      url,
+      url: websiteUrl,
       tagline,
       category,
       logo,
@@ -758,6 +798,39 @@ export async function saveSite(site: Site) {
   return null;
 }
 
+export async function verifySiteBadge(siteId: string) {
+  try {
+    await assertIsManager();
+
+    await dbConnect();
+
+    const site = await SiteModel.findById(siteId);
+
+    if (!site) {
+      throw new Error("Site not found");
+    }
+
+    if (!(await fetchBadgeVerification(site.url))) {
+      site.badgeVerified = false;
+      site.badgeVerifiedAt = 0;
+      site.updatedAt = Date.now();
+      await site.save();
+
+      return false;
+    }
+
+    site.badgeVerified = true;
+    site.badgeVerifiedAt = Date.now();
+    site.updatedAt = Date.now();
+    await site.save();
+
+    return true;
+  } catch (error) {
+    console.log("Verify site badge error", error);
+    throw error;
+  }
+}
+
 export async function triggerSitePublish(site: Site) {
   try {
     await assertIsManager();
@@ -769,6 +842,12 @@ export async function triggerSitePublish(site: Site) {
         $set: { state: SiteState.unpublished, updatedAt: Date.now() },
       });
     } else {
+      const currentSite = await SiteModel.findById(site._id);
+
+      if (!currentSite?.badgeVerified) {
+        throw new Error("Badge must be verified before publishing");
+      }
+
       await SiteModel.findByIdAndUpdate(site._id, {
         $set: { state: SiteState.published, updatedAt: Date.now() },
       });
@@ -851,6 +930,10 @@ export async function updateReviewState(reviewId: string, state: ReviewState) {
     }
 
     if (state === ReviewState.approved) {
+      if (!(await fetchBadgeVerification(review.url))) {
+        throw new Error("Badge must be verified before approval");
+      }
+
       const site = await publishSiteFromReview(review, user.id);
 
       if (site) {

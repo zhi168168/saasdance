@@ -14,6 +14,7 @@ import {
 import dayjs from "dayjs";
 import { debounce } from "lodash";
 import { Eye, EyeOff, SearchIcon } from "lucide-react";
+import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "react-toastify";
@@ -119,6 +120,7 @@ export default function PublishedSitesTable() {
             <TableColumn>Image</TableColumn>
             <TableColumn>{t("siteName")}</TableColumn>
             <TableColumn>{t("url")}</TableColumn>
+            <TableColumn>{t("badge")}</TableColumn>
             <TableColumn>{t("state")}</TableColumn>
             <TableColumn>{t("updatedAt")}</TableColumn>
             <TableColumn>{t("operation")}</TableColumn>
@@ -160,6 +162,18 @@ export default function PublishedSitesTable() {
                   >
                     {site.url}
                   </Link>
+                </TableCell>
+                <TableCell>
+                  <span
+                    className={clsx(
+                      "inline-block rounded w-[82px] h-6 leading-6 text-center text-tiny capitalize bg-primary-500 text-white opacity-80",
+                      {
+                        "bg-green-600 opacity-100": site.badgeVerified,
+                      }
+                    )}
+                  >
+                    {site.badgeVerified ? t("verified") : t("unverified")}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <span className="rounded-md bg-primary-100 px-2 py-1 text-xs font-semibold capitalize text-primary-700">

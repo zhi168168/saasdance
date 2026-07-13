@@ -266,6 +266,7 @@ export default function SitesTable() {
             <TableColumn>{t("siteName")}</TableColumn>
             <TableColumn>{t("url")}</TableColumn>
             <TableColumn>{t("weight")}</TableColumn>
+            <TableColumn maxWidth={100}>{t("badge")}</TableColumn>
             <TableColumn maxWidth={100}>{t("state")}</TableColumn>
             <TableColumn maxWidth={100}>{t("processStage")}</TableColumn>
             <TableColumn maxWidth={160}>{t("updatedAt")}</TableColumn>
@@ -300,6 +301,18 @@ export default function SitesTable() {
                   </Link>
                 </TableCell>
                 <TableCell>{site.weight}</TableCell>
+                <TableCell>
+                  <span
+                    className={clsx(
+                      "inline-block rounded w-[82px] h-6 leading-6 text-center text-tiny capitalize bg-primary-500 text-white opacity-80",
+                      {
+                        "bg-green-600 opacity-100": site.badgeVerified,
+                      }
+                    )}
+                  >
+                    {site.badgeVerified ? t("verified") : t("unverified")}
+                  </span>
+                </TableCell>
                 <TableCell>
                   <span
                     className={clsx(

@@ -30,6 +30,8 @@ export interface SiteDocument extends mongoose.Document {
   metaKeywords: string[];
   metaDesceription: string;
   searchSuggestWords: string[];
+  badgeVerified?: boolean;
+  badgeVerifiedAt?: number;
   state: SiteState;
   processStage: ProcessStage;
   createdAt: number;
@@ -65,6 +67,8 @@ const SiteSchema = new mongoose.Schema<SiteDocument>({
   metaKeywords: { type: [String], default: () => [] },
   metaDesceription: { type: String, default: "" },
   searchSuggestWords: { type: [String], default: () => [] },
+  badgeVerified: { type: Boolean, default: false, index: true },
+  badgeVerifiedAt: { type: Number, default: 0 },
   state: {
     type: String,
     enum: Object.values(SiteState),
