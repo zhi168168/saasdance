@@ -13,6 +13,7 @@ export const AppConfig = {
   // clerk
   clerkPublishableKey:
     (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string) || "",
+  clerkProxyUrl: (process.env.NEXT_PUBLIC_CLERK_PROXY_URL as string) || "",
   clerkClientEnabled: Boolean(
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
       !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.endsWith("_xxx")

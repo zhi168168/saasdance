@@ -44,7 +44,9 @@ function createProtectedRouteMiddleware() {
 
       return handleIntl(req);
     },
-    { debug: AppConfig.debugClerk }
+    {
+      debug: AppConfig.debugClerk,
+    }
   );
 }
 
