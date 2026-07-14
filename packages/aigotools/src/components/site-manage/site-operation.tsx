@@ -8,7 +8,15 @@ import {
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
-import { Atom, Axe, BadgeCheck, Edit, StopCircle, Trash2 } from "lucide-react";
+import {
+  Atom,
+  Axe,
+  BadgeCheck,
+  Edit,
+  Star,
+  StopCircle,
+  Trash2,
+} from "lucide-react";
 
 import { Site } from "@/models/site";
 import { ProcessStage, SiteState } from "@/lib/constants";
@@ -17,6 +25,7 @@ import {
   dispatchSiteCrawl,
   stopSiteCrawl,
   triggerSitePublish,
+  updateSiteFeatured,
   verifySiteBadge,
 } from "@/lib/actions";
 import OperationIcon from "@/components/common/operation-icon";
@@ -33,6 +42,26 @@ export default function SiteOperation({
   const t = useTranslations("siteManage");
 
   const [operationing, setOperationing] = useState(false);
+
+  const handleToggleFeatured = useCallback(async () => {
+    if (operationing) {
+      return false;
+    }
+
+    try {
+      setOperationing(true);
+      await updateSiteFeatured(site._id, !site.featured);
+      toast.success(
+        site.featured ? t("unfeatureSuccess") : t("featureSuccess"),
+      );
+      handleSearch();
+    } catch (error) {
+      console.log(error);
+      toast.error(t("featureFailed"));
+    } finally {
+      setOperationing(false);
+    }
+  }, [handleSearch, operationing, site._id, site.featured, t]);
 
   const handleUpdateSitePublish = useCallback(
     async (site: Site) => {
@@ -159,6 +188,15 @@ export default function SiteOperation({
           onClick={handleVerifyBadge}
         >
           {t("verifyBadge")}
+        </DropdownItem>
+        <DropdownItem
+          className={site.featured ? "text-warning-500" : "text-blue-500"}
+          startContent={
+            <Star fill={site.featured ? "currentColor" : "none"} size={14} />
+          }
+          onClick={handleToggleFeatured}
+        >
+          {site.featured ? t("unfeature") : t("feature")}
         </DropdownItem>
         <DropdownItem
           className={

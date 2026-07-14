@@ -1080,6 +1080,29 @@ export async function deleteSite(siteId: string) {
   }
 }
 
+export async function updateSiteFeatured(siteId: string, featured: boolean) {
+  try {
+    await assertIsManager();
+    await dbConnect();
+
+    const site = await SiteModel.findByIdAndUpdate(
+      siteId,
+      {
+        $set: {
+          featured,
+          updatedAt: Date.now(),
+        },
+      },
+      { returnDocument: "after" },
+    );
+
+    return site ? siteToObject(site) : null;
+  } catch (error) {
+    console.log("Update site featured error", error);
+    throw error;
+  }
+}
+
 export async function updateReviewState(reviewId: string, state: ReviewState) {
   try {
     const user = await assertIsManager();
