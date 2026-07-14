@@ -172,7 +172,11 @@
     "relatedSearchs": "相关搜索",
     "pricings": "定价",
     "saveFailed": "保存站点失败",
-    "save": "保存"
+    "save": "保存",
+    "autoFill": "Auto-fill",
+    "autoFillSuccess": "Auto-filled from website",
+    "autoFillFailed": "Auto-fill failed, please complete the form manually",
+    "requireUrl": "需要URL"
   },
   "categoryManage": {
     "title": "分类管理",

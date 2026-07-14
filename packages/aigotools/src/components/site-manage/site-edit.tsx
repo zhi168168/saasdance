@@ -23,7 +23,7 @@ import LinksInput from "./links-input";
 import { Site } from "@/models/site";
 import ArrowInput from "@/components/common/arrow-input";
 import SingleImageUpload from "@/components/common/single-image-upload";
-import { managerSearchCategories, saveSite } from "@/lib/actions";
+import { autoFillTool, managerSearchCategories, saveSite } from "@/lib/actions";
 
 export default function SiteEdit({
   site,
@@ -44,6 +44,7 @@ export default function SiteEdit({
   const [isOpen, setIsOpen] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [autoFilling, setAutoFilling] = useState(false);
 
   useEffect(() => {
     reset(site);
@@ -90,6 +91,45 @@ export default function SiteEdit({
     initialData: [],
   });
 
+  const handleAutoFill = useCallback(async () => {
+    if (autoFilling) {
+      return;
+    }
+
+    const url = getValues("url");
+
+    if (!url) {
+      toast.error(t("requireUrl"));
+
+      return;
+    }
+
+    try {
+      setAutoFilling(true);
+      const data = await autoFillTool(url);
+      const category = categories.find((item) => item.name === data.category);
+
+      setValue("url", data.url);
+      setValue("name", data.name);
+      setValue("desceription", data.tagline);
+      setValue("metaDesceription", data.tagline);
+      setValue("snapshot", data.appImage);
+      setValue("images", data.logo ? [data.logo] : []);
+      setValue("pricingType", formValues.pricingType || "Free");
+
+      if (category) {
+        setValue("categories", [category._id]);
+      }
+
+      toast.success(t("autoFillSuccess"));
+    } catch (error) {
+      console.log(error);
+      toast.error(t("autoFillFailed"));
+    } finally {
+      setAutoFilling(false);
+    }
+  }, [autoFilling, categories, formValues.pricingType, getValues, setValue, t]);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -107,6 +147,19 @@ export default function SiteEdit({
           <form className="grid grid-cols-2 gap-4 max-h-[65vh] pb-1 overflow-auto">
             <Input
               isRequired
+              endContent={
+                <Button
+                  className="shrink-0"
+                  color="primary"
+                  isLoading={autoFilling}
+                  size="sm"
+                  type="button"
+                  variant="flat"
+                  onPress={handleAutoFill}
+                >
+                  {t("autoFill")}
+                </Button>
+              }
               label={t("url")}
               size="sm"
               value={formValues.url}

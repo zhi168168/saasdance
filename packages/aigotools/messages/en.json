@@ -178,6 +178,10 @@
     "pricingPage": "Pricing",
     "relatedSearchs": "Related Searchs",
     "pricings": "Pricings",
+    "autoFill": "Auto-fill",
+    "autoFillSuccess": "Auto-filled from website",
+    "autoFillFailed": "Auto-fill failed, please complete the form manually",
+    "requireUrl": "URL is required",
     "saveFailed": "Save site failed",
     "save": "Save"
   },

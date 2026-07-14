@@ -5,7 +5,6 @@ import { ExternalLink, Navigation } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 
-import VoteButton from "./vote-button";
 import ListItem from "./list-item";
 import SiteTags from "./site-tags";
 
@@ -145,7 +144,6 @@ export default function SiteDetail({ site }: { site: Site }) {
               {t("visitSite")}
             </Button>
           </Link>
-          <VoteButton site={site} />
         </div>
       </div>
     </div>
