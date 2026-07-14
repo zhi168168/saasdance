@@ -13,7 +13,7 @@ import {
 } from "@nextui-org/react";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
-import { Eye, EyeOff, FileUp, ImagePlus, Plus, SearchIcon } from "lucide-react";
+import { Eye, EyeOff, FileUp, RefreshCw, Plus, SearchIcon } from "lucide-react";
 import clsx from "clsx";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -231,8 +231,11 @@ export default function PublishedSitesTable() {
         const data = await autoFillTool(site.url);
         const saved = await saveSite({
           ...site,
+          name: data.name,
           snapshot: data.appImage,
-          images: site.images?.length ? site.images : data.logo ? [data.logo] : [],
+          desceription: data.tagline,
+          metaDesceription: data.tagline,
+          images: data.logo ? [data.logo] : site.images || [],
           updatedAt: Date.now(),
         });
 
@@ -242,11 +245,11 @@ export default function PublishedSitesTable() {
           return;
         }
 
-        toast.success(t("refetchImageSuccess"));
+        toast.success(t("rowAutoFillSuccess"));
         await handleSearch();
       } catch (error) {
         console.log(error);
-        toast.error(t("refetchImageFailed"));
+        toast.error(t("rowAutoFillFailed"));
       } finally {
         setRefetchingImage("");
       }
@@ -399,22 +402,20 @@ export default function PublishedSitesTable() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {!site.snapshot && (
-                      <Button
-                        color="primary"
-                        isLoading={refetchingImage === site._id}
-                        size="sm"
-                        startContent={
-                          refetchingImage === site._id ? null : (
-                            <ImagePlus size={14} />
-                          )
-                        }
-                        variant="flat"
-                        onPress={() => handleRefetchImage(site)}
-                      >
-                        {t("refetchImage")}
-                      </Button>
-                    )}
+                    <Button
+                      color="primary"
+                      isLoading={refetchingImage === site._id}
+                      size="sm"
+                      startContent={
+                        refetchingImage === site._id ? null : (
+                          <RefreshCw size={14} />
+                        )
+                      }
+                      variant="flat"
+                      onPress={() => handleRefetchImage(site)}
+                    >
+                      {t("rowAutoFill")}
+                    </Button>
                     <Button
                       color={
                         site.state === SiteState.published

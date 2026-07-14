@@ -153,9 +153,9 @@
     "importSuccess": "已导入 {success} 个站点，失败 {failed} 个",
     "importFailed": "{count} 个站点导入失败",
     "importProgress": "已完成 {done}/{total}",
-    "refetchImage": "重新抓图",
-    "refetchImageSuccess": "图片已重新抓取",
-    "refetchImageFailed": "图片重新抓取失败"
+    "rowAutoFill": "Auto-fill",
+    "rowAutoFillSuccess": "Auto-fill 已完成",
+    "rowAutoFillFailed": "Auto-fill 失败"
   },
   "siteEdit": {
     "newTitle": "新建",
