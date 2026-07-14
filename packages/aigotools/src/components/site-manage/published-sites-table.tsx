@@ -13,7 +13,7 @@ import {
 } from "@nextui-org/react";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
-import { Eye, EyeOff, FileUp, Plus, SearchIcon } from "lucide-react";
+import { Eye, EyeOff, FileUp, ImagePlus, Plus, SearchIcon } from "lucide-react";
 import clsx from "clsx";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -69,8 +69,13 @@ export default function PublishedSitesTable() {
   const importInputRef = useRef<HTMLInputElement>(null);
   const [site, setSite] = useState<Site | undefined>(undefined);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({
+    done: 0,
+    total: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState("");
+  const [refetchingImage, setRefetchingImage] = useState("");
   const [searchParams, setSearchParams] = useState({
     page: 1,
     size: 15,
@@ -134,6 +139,7 @@ export default function PublishedSitesTable() {
 
       try {
         setImporting(true);
+        setImportProgress({ done: 0, total: 0 });
         const urls = cleanImportUrls(await parseImportUrls(file));
 
         if (!urls.length) {
@@ -141,6 +147,8 @@ export default function PublishedSitesTable() {
 
           return;
         }
+
+        setImportProgress({ done: 0, total: urls.length });
 
         const categoryResult = await managerSearchCategories({
           page: 1,
@@ -179,6 +187,11 @@ export default function PublishedSitesTable() {
           } catch (error) {
             console.log("Import site failed", url, error);
             failedUrls.push(url);
+          } finally {
+            setImportProgress((progress) => ({
+              ...progress,
+              done: progress.done + 1,
+            }));
           }
         }
 
@@ -205,6 +218,40 @@ export default function PublishedSitesTable() {
       }
     },
     [handleSearch, importing, t]
+  );
+
+  const handleRefetchImage = useCallback(
+    async (site: Site) => {
+      if (refetchingImage) {
+        return;
+      }
+
+      try {
+        setRefetchingImage(site._id);
+        const data = await autoFillTool(site.url);
+        const saved = await saveSite({
+          ...site,
+          snapshot: data.appImage,
+          images: site.images?.length ? site.images : data.logo ? [data.logo] : [],
+          updatedAt: Date.now(),
+        });
+
+        if (!saved) {
+          toast.error(t("refetchImageFailed"));
+
+          return;
+        }
+
+        toast.success(t("refetchImageSuccess"));
+        await handleSearch();
+      } catch (error) {
+        console.log(error);
+        toast.error(t("refetchImageFailed"));
+      } finally {
+        setRefetchingImage("");
+      }
+    },
+    [handleSearch, refetchingImage, t]
   );
 
   useEffect(() => {
@@ -240,6 +287,14 @@ export default function PublishedSitesTable() {
             type="file"
             onChange={handleImportSites}
           />
+          {importing && importProgress.total > 0 && (
+            <span className="text-sm font-medium text-primary-500">
+              {t("importProgress", {
+                done: importProgress.done,
+                total: importProgress.total,
+              })}
+            </span>
+          )}
         </div>
         <Input
           className="w-80"
@@ -343,27 +398,47 @@ export default function PublishedSitesTable() {
                   {dayjs(site.updatedAt).format("YYYY-MM-DD HH:mm:ss")}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    color={
-                      site.state === SiteState.published ? "danger" : "success"
-                    }
-                    isLoading={updating === site._id}
-                    size="sm"
-                    startContent={
-                      updating === site._id ? null : site.state ===
-                        SiteState.published ? (
-                        <EyeOff size={14} />
-                      ) : (
-                        <Eye size={14} />
-                      )
-                    }
-                    variant="flat"
-                    onPress={() => handleTogglePublish(site)}
-                  >
-                    {site.state === SiteState.published
-                      ? t("unpublish")
-                      : t("publish")}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {!site.snapshot && (
+                      <Button
+                        color="primary"
+                        isLoading={refetchingImage === site._id}
+                        size="sm"
+                        startContent={
+                          refetchingImage === site._id ? null : (
+                            <ImagePlus size={14} />
+                          )
+                        }
+                        variant="flat"
+                        onPress={() => handleRefetchImage(site)}
+                      >
+                        {t("refetchImage")}
+                      </Button>
+                    )}
+                    <Button
+                      color={
+                        site.state === SiteState.published
+                          ? "danger"
+                          : "success"
+                      }
+                      isLoading={updating === site._id}
+                      size="sm"
+                      startContent={
+                        updating === site._id ? null : site.state ===
+                          SiteState.published ? (
+                          <EyeOff size={14} />
+                        ) : (
+                          <Eye size={14} />
+                        )
+                      }
+                      variant="flat"
+                      onPress={() => handleTogglePublish(site)}
+                    >
+                      {site.state === SiteState.published
+                        ? t("unpublish")
+                        : t("publish")}
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
