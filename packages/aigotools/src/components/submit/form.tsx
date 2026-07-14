@@ -66,12 +66,12 @@ function UploadBox({
   const [uploading, setUploading] = useState(false);
 
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="text-sm font-medium text-primary-600">
         {label} {required && <span className="text-danger">*</span>}
         {helper && <span className="text-primary-400"> {helper}</span>}
       </span>
-      <span className="mt-2 flex h-20 cursor-pointer items-center justify-center rounded-md border border-dashed border-primary-200 bg-background hover:bg-primary-50">
+      <span className="mt-2 flex h-20 min-w-0 cursor-pointer items-center justify-center rounded-md border border-dashed border-primary-200 bg-background hover:bg-primary-50">
         <input
           accept="image/*"
           className="sr-only"
@@ -104,7 +104,7 @@ function UploadBox({
             }
           }}
         />
-        <span className="flex h-full w-full flex-col items-center justify-center gap-1 overflow-hidden px-3 text-sm text-primary-400">
+        <span className="flex h-full min-w-0 w-full flex-col items-center justify-center gap-1 overflow-hidden px-3 text-sm text-primary-400">
           {uploading ? (
             <span>Uploading...</span>
           ) : isImageUrl ? (
@@ -117,7 +117,7 @@ function UploadBox({
             <Upload size={17} />
           )}
           {fileName ? (
-            <span className="max-w-full truncate">{fileName}</span>
+            <span className="block w-full truncate text-center">{fileName}</span>
           ) : (
             <span>Upload</span>
           )}
@@ -484,7 +484,7 @@ export default function Form() {
         <div className="mb-3 text-sm text-primary-400">
           {t("imageHint")}
         </div>
-        <div className="grid gap-3 sm:grid-cols-[220px_1fr]">
+        <div className="grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)]">
           <UploadBox
             required
             fileName={logo}
