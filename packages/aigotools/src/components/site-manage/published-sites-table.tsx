@@ -13,11 +13,13 @@ import {
 } from "@nextui-org/react";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
-import { Eye, EyeOff, SearchIcon } from "lucide-react";
+import { Eye, EyeOff, Plus, SearchIcon } from "lucide-react";
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "react-toastify";
+
+import SiteEdit from "./site-edit";
 
 import EmptyImage from "@/components/search/empty-image";
 import Loading from "@/components/common/loading";
@@ -26,9 +28,11 @@ import { SiteState } from "@/lib/constants";
 import { Link } from "@/navigation";
 import { Site } from "@/models/site";
 import { createSiteDetailPath } from "@/lib/site-slug";
+import { createTemplateSite } from "@/lib/create-template-site";
 
 export default function PublishedSitesTable() {
   const t = useTranslations("siteManage");
+  const [site, setSite] = useState<Site | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState("");
   const [searchParams, setSearchParams] = useState({
@@ -88,7 +92,15 @@ export default function PublishedSitesTable() {
 
   return (
     <div className="mt-4 relative py-4 text-sm">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-4">
+        <Button
+          color="primary"
+          size="sm"
+          startContent={<Plus size={14} />}
+          onPress={() => setSite(createTemplateSite())}
+        >
+          {t("new")}
+        </Button>
         <Input
           className="w-80"
           endContent={
@@ -243,6 +255,13 @@ export default function PublishedSitesTable() {
           )}
         </div>
       </div>
+      <SiteEdit
+        site={site}
+        onClose={() => {
+          setSite(undefined);
+          handleSearch();
+        }}
+      />
     </div>
   );
 }
