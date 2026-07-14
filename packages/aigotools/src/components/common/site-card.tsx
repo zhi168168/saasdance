@@ -6,6 +6,7 @@ import { ExternalLink, Tag, ThumbsUpIcon } from "lucide-react";
 import { Site } from "@/models/site";
 import { useRouter } from "@/navigation";
 import { createSiteDetailPath } from "@/lib/site-slug";
+import { getSiteLogoUrl } from "@/lib/site-logo";
 
 export default function SiteCard({
   site,
@@ -18,6 +19,7 @@ export default function SiteCard({
   const openDetail = () => {
     router.push(detailPath);
   };
+  const logoUrl = getSiteLogoUrl(site);
 
   return (
     <div
@@ -37,11 +39,11 @@ export default function SiteCard({
         alt={site.name}
         classNames={{
           wrapper:
-            "h-12 w-12 shrink-0 !max-w-none rounded-lg bg-primary-100 sm:h-14 sm:w-14",
-          img: "h-12 w-12 object-cover sm:h-14 sm:w-14",
+            "h-12 w-12 shrink-0 !max-w-none rounded-lg border border-primary-200 bg-white sm:h-14 sm:w-14",
+          img: "h-12 w-12 object-contain p-2 sm:h-14 sm:w-14",
         }}
         radius="sm"
-        src={site.snapshot}
+        src={logoUrl}
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">

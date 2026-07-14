@@ -16,19 +16,22 @@ export default function SiteGroup({
   title,
   sites,
   id,
+  className,
+  contained = true,
 }: {
   id?: string;
-  title: String;
+  title: string;
   sites: Array<Site>;
+  className?: string;
+  contained?: boolean;
 }) {
   if (!sites.length) {
     return null;
   }
 
   const detailPaths = createUniqueSiteDetailPaths(sites);
-
-  return (
-    <Container className="mt-10 sm:mt-16" id={id}>
+  const content = (
+    <section className={clsx("mt-10 sm:mt-16", className)} id={id}>
       <h2 className={clsx(istokWeb.className, "text-2xl font-bold")}>
         {title}
       </h2>
@@ -43,6 +46,8 @@ export default function SiteGroup({
           );
         })}
       </div>
-    </Container>
+    </section>
   );
+
+  return contained ? <Container>{content}</Container> : content;
 }

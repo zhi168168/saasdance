@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import SiteCard from "./site-card";
-
 import { SiteState } from "@/lib/constants";
 import { Site } from "@/models/site";
+
+import SiteCard from "./site-card";
 
 const localSitesKey = "saasDanceLocalSites";
 
@@ -21,7 +21,9 @@ export default function LocalApprovedSites() {
   const [sites, setSites] = useState<Site[]>([]);
 
   useEffect(() => {
-    setSites(getLocalSites().filter((site) => site.state === SiteState.published));
+    setSites(
+      getLocalSites().filter((site) => site.state === SiteState.published),
+    );
   }, []);
 
   if (!sites.length) {
@@ -31,7 +33,7 @@ export default function LocalApprovedSites() {
   return (
     <div className="mt-10 sm:mt-16" id="local-approved">
       <h2 className="text-2xl font-bold">Approved Submissions</h2>
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-4 divide-y divide-primary-200/70">
         {sites.map((site) => (
           <SiteCard key={site._id} site={site} />
         ))}
