@@ -32,13 +32,13 @@ export default function SiteGroup({
       <h2 className={clsx(istokWeb.className, "text-2xl font-bold")}>
         {title}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+      <div className="mt-4 divide-y divide-primary-200/70">
         {sites.map((site, index) => {
           return (
             <SiteCard
               key={site._id}
-              site={site}
               detailPath={detailPaths[index]}
+              site={site}
             />
           );
         })}

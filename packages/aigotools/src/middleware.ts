@@ -110,7 +110,9 @@ function publicOnlyMiddleware(req: Parameters<typeof intlMiddleware>[0]) {
   return handleIntl(req);
 }
 
-const protectedRouteMiddleware = createProtectedRouteMiddleware();
+let protectedRouteMiddleware:
+  | ReturnType<typeof createProtectedRouteMiddleware>
+  | undefined;
 
 export default function middleware(req: NextRequest, event: NextFetchEvent) {
   if (!AppConfig.clerkEnabled) {
@@ -120,6 +122,8 @@ export default function middleware(req: NextRequest, event: NextFetchEvent) {
   if (isAuthFlowRoute(req.nextUrl.pathname)) {
     return handleIntl(req);
   }
+
+  protectedRouteMiddleware ||= createProtectedRouteMiddleware();
 
   return protectedRouteMiddleware(req, event);
 }
