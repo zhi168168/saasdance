@@ -5,6 +5,7 @@ import { SiteModel } from "@/models/site";
 import { SiteState } from "@/lib/constants";
 import { AvailableLocales } from "@/lib/locales";
 import { AppConfig } from "@/lib/config";
+import { createUniqueSiteDetailPaths } from "@/lib/site-slug";
 
 const perSitemapCount = 2000;
 
@@ -69,24 +70,26 @@ export default async function sitemap({ id }: { id: number }) {
     // sites page site map
     await dbConnect();
 
-    const siteKeyObjs = await SiteModel.find(
+    const sites = await SiteModel.find(
       {
         state: SiteState.published,
       },
 
       {
         _id: 0,
-        siteKey: 1,
+        name: 1,
       }
     )
+      .sort({ weight: -1, updatedAt: -1 })
       .skip(id * perSitemapCount)
       .limit(perSitemapCount)
       .lean();
+    const detailPaths = createUniqueSiteDetailPaths(sites);
 
     sitemapRoutes.push(
-      ...siteKeyObjs.map(({ siteKey }) => {
+      ...detailPaths.map((path) => {
         return {
-          url: `s/${siteKey}`,
+          url: path.replace(/^\//, ""),
           lastModified: new Date(),
           changeFrequency: "monthly" as const,
           priority: 0.9,

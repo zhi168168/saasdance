@@ -10,6 +10,7 @@ import { createTemplateSite } from "./create-template-site";
 import { ProcessStage, ReviewState, SiteState } from "./constants";
 import { AppConfig } from "./config";
 import { searchSeedSites, seedCategories, seedSites } from "./seed-data";
+import { createSiteSlug } from "./site-slug";
 import {
   uploadBufferToCloudinary,
   uploadRemoteImageToCloudinary,
@@ -649,6 +650,91 @@ export async function getSiteMetadata(siteKey: string) {
   return null;
 }
 
+function createSiteSlugWithIndex(
+  site: Pick<Site, "name">,
+  slugCounts: Map<string, number>
+) {
+  const baseSlug = createSiteSlug(site.name);
+  const index = slugCounts.get(baseSlug) || 0;
+
+  slugCounts.set(baseSlug, index + 1);
+
+  return `${baseSlug}${index > 0 ? index : ""}`;
+}
+
+type SiteSlugSource = Pick<Site, "name"> & {
+  _id?: unknown;
+  desceription?: string;
+  metaDesceription?: string;
+  metaKeywords?: string[];
+  siteKey?: string;
+  categories?: string[];
+};
+
+function findSiteByDetailSlug<T extends SiteSlugSource>(
+  slug: string,
+  sites: T[]
+) {
+  const slugCounts = new Map<string, number>();
+
+  return (
+    sites.find((site) => createSiteSlugWithIndex(site, slugCounts) === slug) ||
+    null
+  );
+}
+
+export async function getSiteMetadataBySlug(slug: string) {
+  if (!AppConfig.mongoUri) {
+    const site = findSiteByDetailSlug(slug, seedSites);
+
+    if (!site) {
+      return null;
+    }
+
+    return {
+      title: site.name,
+      description: site.metaDesceription || site.desceription,
+      keywords: site.metaKeywords,
+    };
+  }
+
+  try {
+    await dbConnect();
+
+    const sites = await SiteModel.find(
+      {
+        state: SiteState.published,
+      },
+      {
+        name: 1,
+        metaDesceription: 1,
+        desceription: 1,
+        metaKeywords: 1,
+      }
+    )
+      .sort({ weight: -1, updatedAt: -1 })
+      .lean();
+    const site = findSiteByDetailSlug(
+      slug,
+      sites as unknown as SiteSlugSource[]
+    );
+
+    if (!site) {
+      return null;
+    }
+
+    return {
+      title: site.name,
+      description: site.metaDesceription || site.desceription,
+      keywords: site.metaKeywords,
+    };
+  } catch (error) {
+    console.log("Get site metadata by slug error", error);
+  }
+
+  return null;
+}
+
 export async function getSiteDetailByKey(siteKey: string) {
   if (!AppConfig.mongoUri) {
     const site = seedSites.find((item) => item.siteKey === siteKey);
@@ -803,6 +889,79 @@ export async function saveSite(site: Site) {
     return siteToObject(saved);
   } catch (error) {
     console.log("Save site error", error);
+  }
+
+  return null;
+}
+
+export async function getSiteDetailBySlug(slug: string) {
+  if (!AppConfig.mongoUri) {
+    const site = findSiteByDetailSlug(slug, seedSites);
+
+    if (!site) {
+      return null;
+    }
+
+    return {
+      site,
+      suggests: seedSites
+        .filter((item) => item.siteKey !== site.siteKey)
+        .filter((item) =>
+          item.categories.some((category) => site.categories.includes(category))
+        )
+        .slice(0, 4),
+    };
+  }
+
+  try {
+    await dbConnect();
+
+    const slugSourceSites = await SiteModel.find(
+      {
+        state: SiteState.published,
+      },
+      {
+        name: 1,
+      }
+    )
+      .sort({ weight: -1, updatedAt: -1 })
+      .lean();
+    const slugSourceSite = findSiteByDetailSlug(
+      slug,
+      slugSourceSites as unknown as SiteSlugSource[]
+    );
+
+    if (!slugSourceSite) {
+      return null;
+    }
+
+    const site = await SiteModel.findOne({
+      _id: slugSourceSite._id,
+      state: SiteState.published,
+    }).populate("categories");
+
+    if (!site) {
+      return null;
+    }
+
+    const suggests = await SiteModel.find(
+      {
+        $text: { $search: site.desceription },
+        _id: { $ne: site._id },
+        state: SiteState.published,
+      },
+      { score: { $meta: "textScore" } }
+    )
+      .sort({ score: { $meta: "textScore" } })
+      .limit(12)
+      .populate("categories");
+
+    return {
+      site: pickCategoryName(siteToObject(site)),
+      suggests: suggests.map(siteToObject).map(pickCategoryName),
+    };
+  } catch (error) {
+    console.log("Get site detail by slug error", error);
   }
 
   return null;

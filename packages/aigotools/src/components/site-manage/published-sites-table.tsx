@@ -25,6 +25,7 @@ import { managerSearchSites, triggerSitePublish } from "@/lib/actions";
 import { SiteState } from "@/lib/constants";
 import { Link } from "@/navigation";
 import { Site } from "@/models/site";
+import { createSiteDetailPath } from "@/lib/site-slug";
 
 export default function PublishedSitesTable() {
   const t = useTranslations("siteManage");
@@ -154,7 +155,7 @@ export default function PublishedSitesTable() {
                 <TableCell>
                   <Link
                     className="font-semibold text-primary-900 hover:underline"
-                    href={`/s/${site.siteKey}`}
+                    href={createSiteDetailPath(site)}
                     target="_blank"
                   >
                     {site.name}

@@ -5,16 +5,32 @@ import { ExternalLink, ThumbsUpIcon } from "lucide-react";
 
 import { Site } from "@/models/site";
 import { useRouter } from "@/navigation";
+import { createSiteDetailPath } from "@/lib/site-slug";
 
-export default function SiteCard({ site }: { site: Site }) {
+export default function SiteCard({
+  site,
+  detailPath = createSiteDetailPath(site),
+}: {
+  site: Site;
+  detailPath?: string;
+}) {
   const router = useRouter();
+  const openDetail = () => {
+    router.push(detailPath);
+  };
 
   return (
     <div
       key={site._id as string}
-      className="group w-full shadow-medium hover:shadow-large transition-all bg-primary-100 rounded-md overflow-hidden cursor-pointer"
-      onClick={() => {
-        router.push(`/s/${site.siteKey}`);
+      role="link"
+      tabIndex={0}
+      className="group w-full shadow-medium hover:shadow-large transition-all bg-primary-100 rounded-md overflow-hidden cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700"
+      onClick={openDetail}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetail();
+        }
       }}
     >
       <Image

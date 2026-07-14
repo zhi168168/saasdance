@@ -43,6 +43,7 @@ import Loading from "@/components/common/loading";
 import EmptyImage from "@/components/search/empty-image";
 import { Link } from "@/navigation";
 import { createTemplateSite } from "@/lib/create-template-site";
+import { createSiteDetailPath } from "@/lib/site-slug";
 
 export default function SitesTable() {
   const t = useTranslations("siteManage");
@@ -285,7 +286,7 @@ export default function SitesTable() {
                 <TableCell>
                   <Link
                     className="text-blue-500 hover:underline"
-                    href={`/s/${site.siteKey}`}
+                    href={createSiteDetailPath(site)}
                     target="_blank"
                   >
                     {site.name}
