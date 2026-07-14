@@ -44,7 +44,8 @@
     "react-hook-form": "^7.51.5",
     "react-toastify": "^10.0.5",
     "sharp": "^0.33.4",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.4",

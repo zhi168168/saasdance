@@ -13,9 +13,9 @@ import {
 } from "@nextui-org/react";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
-import { Eye, EyeOff, Plus, SearchIcon } from "lucide-react";
+import { Eye, EyeOff, FileUp, Plus, SearchIcon } from "lucide-react";
 import clsx from "clsx";
-import { useCallback, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "react-toastify";
 
@@ -23,16 +23,52 @@ import SiteEdit from "./site-edit";
 
 import EmptyImage from "@/components/search/empty-image";
 import Loading from "@/components/common/loading";
-import { managerSearchSites, triggerSitePublish } from "@/lib/actions";
-import { SiteState } from "@/lib/constants";
+import {
+  autoFillTool,
+  managerSearchCategories,
+  managerSearchSites,
+  saveSite,
+  triggerSitePublish,
+} from "@/lib/actions";
+import { ProcessStage, SiteState } from "@/lib/constants";
 import { Link } from "@/navigation";
 import { Site } from "@/models/site";
 import { createSiteDetailPath } from "@/lib/site-slug";
 import { createTemplateSite } from "@/lib/create-template-site";
 
+async function parseImportUrls(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+
+  if (extension === "xlsx" || extension === "xls") {
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
+
+    return rows.map((row) => row?.[0]);
+  }
+
+  const text = await file.text();
+
+  return text.split(/\r?\n/).map((line) => line.split(",")[0]);
+}
+
+function cleanImportUrls(values: unknown[]) {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+        .filter((value) => !/^url$/i.test(value))
+    )
+  );
+}
+
 export default function PublishedSitesTable() {
   const t = useTranslations("siteManage");
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [site, setSite] = useState<Site | undefined>(undefined);
+  const [importing, setImporting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState("");
   const [searchParams, setSearchParams] = useState({
@@ -86,6 +122,91 @@ export default function PublishedSitesTable() {
     [handleSearch, t, updating]
   );
 
+  const handleImportSites = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+
+      event.target.value = "";
+
+      if (!file || importing) {
+        return;
+      }
+
+      try {
+        setImporting(true);
+        const urls = cleanImportUrls(await parseImportUrls(file));
+
+        if (!urls.length) {
+          toast.error(t("importEmpty"));
+
+          return;
+        }
+
+        const categoryResult = await managerSearchCategories({
+          page: 1,
+          size: 999,
+          type: "second",
+        });
+        let successCount = 0;
+        const failedUrls: string[] = [];
+
+        for (const url of urls) {
+          try {
+            const data = await autoFillTool(url);
+            const category = categoryResult.categories.find(
+              (item) => item.name === data.category
+            );
+            const saved = await saveSite(
+              createTemplateSite({
+                url: data.url,
+                name: data.name,
+                snapshot: data.appImage,
+                desceription: data.tagline,
+                metaDesceription: data.tagline,
+                pricingType: "Free",
+                categories: category ? [category._id] : [],
+                images: data.logo ? [data.logo] : [],
+                state: SiteState.published,
+                processStage: ProcessStage.success,
+              })
+            );
+
+            if (saved) {
+              successCount += 1;
+            } else {
+              failedUrls.push(url);
+            }
+          } catch (error) {
+            console.log("Import site failed", url, error);
+            failedUrls.push(url);
+          }
+        }
+
+        if (successCount) {
+          toast.success(
+            t("importSuccess", {
+              success: successCount,
+              failed: failedUrls.length,
+            })
+          );
+        }
+
+        if (failedUrls.length) {
+          toast.error(t("importFailed", { count: failedUrls.length }));
+          console.log("Failed imported urls", failedUrls);
+        }
+
+        await handleSearch();
+      } catch (error) {
+        console.log(error);
+        toast.error(t("importFailed", { count: 0 }));
+      } finally {
+        setImporting(false);
+      }
+    },
+    [handleSearch, importing, t]
+  );
+
   useEffect(() => {
     handleSearch();
   }, [handleSearch]);
@@ -93,14 +214,33 @@ export default function PublishedSitesTable() {
   return (
     <div className="mt-4 relative py-4 text-sm">
       <div className="flex items-center justify-between gap-4">
-        <Button
-          color="primary"
-          size="sm"
-          startContent={<Plus size={14} />}
-          onPress={() => setSite(createTemplateSite())}
-        >
-          {t("new")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            color="primary"
+            size="sm"
+            startContent={<Plus size={14} />}
+            onPress={() => setSite(createTemplateSite())}
+          >
+            {t("new")}
+          </Button>
+          <Button
+            color="primary"
+            isLoading={importing}
+            size="sm"
+            startContent={importing ? null : <FileUp size={14} />}
+            variant="flat"
+            onPress={() => importInputRef.current?.click()}
+          >
+            {t("importSheet")}
+          </Button>
+          <input
+            ref={importInputRef}
+            accept=".xlsx,.xls,.csv,.txt"
+            className="hidden"
+            type="file"
+            onChange={handleImportSites}
+          />
+        </div>
         <Input
           className="w-80"
           endContent={
