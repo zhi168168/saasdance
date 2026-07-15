@@ -1,6 +1,6 @@
 "use server";
 import { currentUser } from "@clerk/nextjs/server";
-import { FilterQuery } from "mongoose";
+import { FilterQuery, Types } from "mongoose";
 import axios from "axios";
 import { createHash } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
@@ -40,25 +40,45 @@ function pickCategoryName(site: Site) {
   return site;
 }
 
+function normalizeCategoryName(name: string) {
+  return name.trim().replace(/\s+/g, " ");
+}
+
+function getCategoryDefaults(name: string) {
+  const normalized = normalizeCategoryName(name);
+  const seedCategory = seedCategories.find(
+    (category) => category.name.toLowerCase() === normalized.toLowerCase()
+  );
+
+  return {
+    name: seedCategory?.name || normalized,
+    icon: seedCategory?.icon || "",
+    featured: seedCategory?.featured || false,
+    weight: seedCategory?.weight || 0,
+  };
+}
+
+function isObjectIdString(value: string) {
+  return Types.ObjectId.isValid(value) && new Types.ObjectId(value).toString() === value;
+}
+
 async function findOrCreateCategoryId(name?: string) {
   if (!name) {
     return null;
   }
 
-  const trimmed = name.trim();
+  const trimmed = normalizeCategoryName(name);
 
   if (!trimmed) {
     return null;
   }
 
+  const defaults = getCategoryDefaults(trimmed);
   const category = await CategoryModel.findOneAndUpdate(
-    { name: trimmed },
+    { name: defaults.name },
     {
       $setOnInsert: {
-        name: trimmed,
-        icon: "",
-        featured: false,
-        weight: 0,
+        ...defaults,
         createdAt: Date.now(),
       },
       $set: {
@@ -69,6 +89,35 @@ async function findOrCreateCategoryId(name?: string) {
   );
 
   return category._id;
+}
+
+async function resolveCategoryIds(categories: string[] = []) {
+  const ids: string[] = [];
+  const names = new Set<string>();
+
+  categories.forEach((category) => {
+    const value = normalizeCategoryName(category || "");
+
+    if (!value) {
+      return;
+    }
+
+    if (isObjectIdString(value)) {
+      ids.push(value);
+    } else {
+      names.add(value);
+    }
+  });
+
+  for (const name of Array.from(names)) {
+    const id = await findOrCreateCategoryId(name);
+
+    if (id) {
+      ids.push(id.toString());
+    }
+  }
+
+  return Array.from(new Set(ids));
 }
 
 function siteKeyFromUrl(url: string) {
@@ -502,28 +551,30 @@ function resolveUrl(value: string, baseUrl: string) {
   }
 }
 
-function inferCategory(text: string) {
-  const value = text.toLowerCase();
-  const rules: Array<[string, string[]]> = [
-    ["Games", ["game", "gaming", "play", "player", "quest", "steam"]],
-    ["Artificial Intelligence", ["ai", "artificial intelligence", "chatbot", "llm", "gpt"]],
-    ["Developer Tools", ["developer", "api", "sdk", "code", "deploy", "database"]],
-    ["Design", ["design", "figma", "prototype", "visual", "mockup"]],
-    ["Marketing", ["marketing", "email", "campaign", "lead", "growth"]],
-    ["SEO", ["seo", "keyword", "backlink", "rank", "search traffic"]],
-    ["Analytics", ["analytics", "tracking", "dashboard", "metrics", "insights"]],
-    ["Productivity", ["productivity", "workflow", "task", "notes", "calendar"]],
-    ["Automation", ["automation", "automate", "zapier", "integration"]],
-    ["No Code", ["no-code", "nocode", "no code", "builder"]],
-    ["Writing", ["writing", "writer", "copywriting", "article", "blog"]],
-    ["Education", ["education", "learn", "course", "school", "student"]],
-  ];
+const categoryInferenceRules: Array<[string, string[]]> = [
+  ["Games", ["game", "gaming", "play", "player", "quest", "steam"]],
+  ["Artificial Intelligence", ["ai", "artificial intelligence", "chatbot", "llm", "gpt"]],
+  ["Developer Tools", ["developer", "api", "sdk", "code", "deploy", "database"]],
+  ["Design", ["design", "figma", "prototype", "visual", "mockup"]],
+  ["Marketing", ["marketing", "email", "campaign", "lead", "growth"]],
+  ["SEO", ["seo", "keyword", "backlink", "rank", "search traffic"]],
+  ["Analytics", ["analytics", "tracking", "dashboard", "metrics", "insights"]],
+  ["Productivity", ["productivity", "workflow", "task", "notes", "calendar"]],
+  ["Automation", ["automation", "automate", "zapier", "integration"]],
+  ["No Code", ["no-code", "nocode", "no code", "builder"]],
+  ["Writing", ["writing", "writer", "copywriting", "article", "blog"]],
+  ["Education", ["education", "learn", "course", "school", "student"]],
+];
 
-  return (
-    rules.find(([, keywords]) =>
+function inferCategoryNames(text: string) {
+  const value = text.toLowerCase();
+  const categories = categoryInferenceRules
+    .filter(([, keywords]) =>
       keywords.some((keyword) => value.includes(keyword))
-    )?.[0] || "Productivity"
-  );
+    )
+    .map(([category]) => category);
+
+  return categories.length ? categories : ["Productivity"];
 }
 
 async function captureHomepageScreenshot(websiteUrl: string) {
@@ -647,11 +698,15 @@ export async function autoFillTool(url: string) {
 
   const appImage = await captureHomepageScreenshot(websiteUrl);
 
+  const categoryText = `${title} ${description} ${urlObj.hostname}`;
+  const categories = inferCategoryNames(categoryText);
+
   return {
     name: title.replace(/\s+/g, " ").trim(),
     url: websiteUrl,
     tagline: description || `${title.replace(/\s+/g, " ").trim()} helps people discover and use this tool.`,
-    category: inferCategory(`${title} ${description} ${urlObj.hostname}`),
+    category: categories[0],
+    categories,
     logo,
     appImage,
   };
@@ -915,6 +970,7 @@ export async function saveSite(site: Site) {
     site.url = urlObj.origin;
     site.updatedAt = Date.now();
     site.siteKey = urlObj.hostname.replace(/[^\w]/g, "_");
+    site.categories = await resolveCategoryIds(site.categories);
 
     let saved: SiteDocument;
 
@@ -925,9 +981,21 @@ export async function saveSite(site: Site) {
         { returnDocument: "after" }
       )) as any;
     } else {
-      site.userId = user.id;
+      site.userId = site.userId || user.id;
+      const { createdAt, ...siteUpdates } = site;
 
-      saved = await SiteModel.create(site);
+      delete (siteUpdates as Partial<Site>)._id;
+
+      saved = (await SiteModel.findOneAndUpdate(
+        { siteKey: site.siteKey },
+        {
+          $set: siteUpdates,
+          $setOnInsert: {
+            createdAt: createdAt || Date.now(),
+          },
+        },
+        { new: true, upsert: true }
+      )) as any;
     }
 
     saved.categories = saved.categories.map((c) => c.toString());
@@ -938,6 +1006,60 @@ export async function saveSite(site: Site) {
   }
 
   return null;
+}
+
+export async function repairSiteCategories() {
+  try {
+    await assertIsManager();
+
+    await dbConnect();
+
+    const sites = await SiteModel.find({
+      state: SiteState.published,
+    });
+    let updated = 0;
+
+    for (const site of sites) {
+      const inferredCategories = inferCategoryNames(
+        [
+          site.name,
+          site.desceription,
+          site.metaDesceription,
+          site.url,
+          site.siteKey,
+          ...(site.metaKeywords || []),
+          ...(site.features || []),
+          ...(site.usecases || []),
+          ...(site.relatedSearchs || []),
+        ].join(" ")
+      );
+      const categoryIds = await resolveCategoryIds([
+        ...(site.categories || []).map((category) => category.toString()),
+        ...inferredCategories,
+      ]);
+      const currentCategoryIds = (site.categories || []).map((category) =>
+        category.toString()
+      );
+
+      if (
+        categoryIds.length !== currentCategoryIds.length ||
+        categoryIds.some((categoryId) => !currentCategoryIds.includes(categoryId))
+      ) {
+        site.categories = categoryIds;
+        site.updatedAt = Date.now();
+        await site.save();
+        updated += 1;
+      }
+    }
+
+    return {
+      total: sites.length,
+      updated,
+    };
+  } catch (error) {
+    console.log("Repair site categories error", error);
+    throw error;
+  }
 }
 
 export async function getSiteDetailBySlug(slug: string) {

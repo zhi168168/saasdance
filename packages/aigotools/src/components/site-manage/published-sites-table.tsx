@@ -21,6 +21,7 @@ import {
   RefreshCw,
   SearchIcon,
   Star,
+  Tags,
 } from "lucide-react";
 import clsx from "clsx";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
@@ -33,8 +34,8 @@ import EmptyImage from "@/components/search/empty-image";
 import Loading from "@/components/common/loading";
 import {
   autoFillTool,
-  managerSearchCategories,
   managerSearchSites,
+  repairSiteCategories,
   saveSite,
   triggerSitePublish,
   updateSiteFeatured,
@@ -46,32 +47,123 @@ import { createSiteDetailPath } from "@/lib/site-slug";
 import { createTemplateSite } from "@/lib/create-template-site";
 import { getSiteLogoUrl } from "@/lib/site-logo";
 
-async function parseImportUrls(file: File) {
+type ImportRow = {
+  url: string;
+  categories: string[];
+};
+
+const urlHeaderKeys = new Set([
+  "url",
+  "urls",
+  "link",
+  "links",
+  "website",
+  "websiteurl",
+  "site",
+  "siteurl",
+  "domain",
+  "网址",
+  "链接",
+  "网站",
+  "站点",
+]);
+
+const categoryHeaderKeys = new Set([
+  "category",
+  "categories",
+  "cat",
+  "type",
+  "types",
+  "attribute",
+  "attributes",
+  "property",
+  "properties",
+  "tag",
+  "tags",
+  "分类",
+  "分类名",
+  "类别",
+  "属性",
+  "标签",
+]);
+
+function normalizeHeader(value: unknown) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+}
+
+function findHeaderIndex(row: unknown[] = [], keys: Set<string>) {
+  return row.findIndex((value) => keys.has(normalizeHeader(value)));
+}
+
+function splitCategories(value: unknown) {
+  return String(value || "")
+    .split(/[,，;；、|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function importRowsFromSheetRows(rows: unknown[][]): ImportRow[] {
+  const firstRow = rows[0] || [];
+  const headerUrlIndex = findHeaderIndex(firstRow, urlHeaderKeys);
+  const headerCategoryIndex = findHeaderIndex(firstRow, categoryHeaderKeys);
+  const hasHeader = headerUrlIndex >= 0;
+  const urlIndex = hasHeader ? headerUrlIndex : 0;
+  const categoryIndex = hasHeader ? headerCategoryIndex : 1;
+  const dataRows = hasHeader ? rows.slice(1) : rows;
+
+  return dataRows.map((row) => ({
+    url: String(row?.[urlIndex] || "").trim(),
+    categories: categoryIndex >= 0 ? splitCategories(row?.[categoryIndex]) : [],
+  }));
+}
+
+async function parseImportRows(file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase();
 
-  if (extension === "xlsx" || extension === "xls") {
+  if (extension === "xlsx" || extension === "xls" || extension === "csv") {
     const XLSX = await import("xlsx");
-    const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+    const workbook =
+      extension === "csv"
+        ? XLSX.read(await file.text(), { type: "string" })
+        : XLSX.read(await file.arrayBuffer(), { type: "array" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
 
-    return rows.map((row) => row?.[0]);
+    return importRowsFromSheetRows(rows);
   }
 
   const text = await file.text();
+  const rows = text
+    .split(/\r?\n/)
+    .map((line) => line.split(/\t|,/).map((item) => item.trim()));
 
-  return text.split(/\r?\n/).map((line) => line.split(",")[0]);
+  return importRowsFromSheetRows(rows);
 }
 
-function cleanImportUrls(values: unknown[]) {
-  return Array.from(
-    new Set(
-      values
-        .map((value) => String(value || "").trim())
-        .filter(Boolean)
-        .filter((value) => !/^url$/i.test(value))
-    )
-  );
+function cleanImportRows(values: ImportRow[]) {
+  const rows = new Map<string, ImportRow>();
+
+  values.forEach((row) => {
+    const url = row.url.trim();
+
+    if (!url || urlHeaderKeys.has(normalizeHeader(url))) {
+      return;
+    }
+
+    const existing = rows.get(url);
+
+    rows.set(url, {
+      url,
+      categories: Array.from(
+        new Set([...(existing?.categories || []), ...row.categories])
+      ),
+    });
+  });
+
+  return Array.from(rows.values());
 }
 
 export default function PublishedSitesTable() {
@@ -79,6 +171,7 @@ export default function PublishedSitesTable() {
   const importInputRef = useRef<HTMLInputElement>(null);
   const [site, setSite] = useState<Site | undefined>(undefined);
   const [importing, setImporting] = useState(false);
+  const [repairingCategories, setRepairingCategories] = useState(false);
   const [importProgress, setImportProgress] = useState({
     done: 0,
     total: 0,
@@ -173,30 +266,25 @@ export default function PublishedSitesTable() {
       try {
         setImporting(true);
         setImportProgress({ done: 0, total: 0 });
-        const urls = cleanImportUrls(await parseImportUrls(file));
+        const rows = cleanImportRows(await parseImportRows(file));
 
-        if (!urls.length) {
+        if (!rows.length) {
           toast.error(t("importEmpty"));
 
           return;
         }
 
-        setImportProgress({ done: 0, total: urls.length });
+        setImportProgress({ done: 0, total: rows.length });
 
-        const categoryResult = await managerSearchCategories({
-          page: 1,
-          size: 999,
-          type: "second",
-        });
         let successCount = 0;
         const failedUrls: string[] = [];
 
-        for (const url of urls) {
+        for (const row of rows) {
           try {
-            const data = await autoFillTool(url);
-            const category = categoryResult.categories.find(
-              (item) => item.name === data.category
-            );
+            const data = await autoFillTool(row.url);
+            const categories = row.categories.length
+              ? row.categories
+              : data.categories || [data.category];
             const saved = await saveSite(
               createTemplateSite({
                 url: data.url,
@@ -205,7 +293,7 @@ export default function PublishedSitesTable() {
                 desceription: data.tagline,
                 metaDesceription: data.tagline,
                 pricingType: "Free",
-                categories: category ? [category._id] : [],
+                categories,
                 images: data.logo ? [data.logo] : [],
                 state: SiteState.published,
                 processStage: ProcessStage.success,
@@ -215,11 +303,11 @@ export default function PublishedSitesTable() {
             if (saved) {
               successCount += 1;
             } else {
-              failedUrls.push(url);
+              failedUrls.push(row.url);
             }
           } catch (error) {
-            console.log("Import site failed", url, error);
-            failedUrls.push(url);
+            console.log("Import site failed", row.url, error);
+            failedUrls.push(row.url);
           } finally {
             setImportProgress((progress) => ({
               ...progress,
@@ -252,6 +340,34 @@ export default function PublishedSitesTable() {
     },
     [handleSearch, importing, t]
   );
+
+  const handleRepairCategories = useCallback(async () => {
+    if (repairingCategories) {
+      return;
+    }
+
+    if (!window.confirm(t("repairCategoriesConfirm"))) {
+      return;
+    }
+
+    try {
+      setRepairingCategories(true);
+      const result = await repairSiteCategories();
+
+      toast.success(
+        t("repairCategoriesSuccess", {
+          updated: result.updated,
+          total: result.total,
+        })
+      );
+      await handleSearch();
+    } catch (error) {
+      console.log(error);
+      toast.error(t("repairCategoriesFailed"));
+    } finally {
+      setRepairingCategories(false);
+    }
+  }, [handleSearch, repairingCategories, t]);
 
   const handleRefetchImage = useCallback(
     async (site: Site) => {
@@ -315,6 +431,16 @@ export default function PublishedSitesTable() {
             onPress={() => importInputRef.current?.click()}
           >
             {t("importSheet")}
+          </Button>
+          <Button
+            color="primary"
+            isLoading={repairingCategories}
+            size="sm"
+            startContent={repairingCategories ? null : <Tags size={14} />}
+            variant="flat"
+            onPress={handleRepairCategories}
+          >
+            {t("repairCategories")}
           </Button>
           <input
             ref={importInputRef}
