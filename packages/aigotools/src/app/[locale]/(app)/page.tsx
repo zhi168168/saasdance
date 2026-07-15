@@ -3,16 +3,16 @@ import { getTranslations } from "next-intl/server";
 import Container from "@/components/common/container";
 import FeaturedSitesSidebar from "@/components/common/featured-sites-sidebar";
 import Hero from "@/components/index/hero";
+import LatestSitesFeed from "@/components/index/latest-sites-feed";
 import LocalApprovedSites from "@/components/common/local-approved-sites";
 import Search from "@/components/index/search";
-import SiteGroup from "@/components/common/sites-group";
-import { getFeaturedSites, getLatestSites } from "@/lib/actions";
+import { getFeaturedSites, getLatestSitesPage } from "@/lib/actions";
 
 export default async function Page() {
   const t = await getTranslations("index");
-  const [featuredSites, latestSites] = await Promise.all([
+  const [featuredSites, latestSitesPage] = await Promise.all([
     getFeaturedSites(),
-    getLatestSites(),
+    getLatestSitesPage({ page: 1, size: 30 }),
   ]);
 
   return (
@@ -25,11 +25,9 @@ export default async function Page() {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start xl:gap-14">
           <main className="min-w-0">
             <LocalApprovedSites />
-            <SiteGroup
-              className="mt-0 sm:mt-0"
-              contained={false}
-              id="latest"
-              sites={latestSites}
+            <LatestSitesFeed
+              initialHasNext={latestSitesPage.hasNext}
+              initialSites={latestSitesPage.sites}
               title={t("latest")}
             />
           </main>

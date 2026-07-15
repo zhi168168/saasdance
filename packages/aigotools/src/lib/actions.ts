@@ -386,6 +386,55 @@ export async function getLatestSites(size = 12) {
   }
 }
 
+export async function getLatestSitesPage({
+  page,
+  size = 30,
+}: {
+  page: number;
+  size?: number;
+}) {
+  if (!AppConfig.mongoUri) {
+    const sortedSites = [...seedSites].sort((a, b) => b.updatedAt - a.updatedAt);
+
+    return {
+      page,
+      sites: sortedSites.slice((page - 1) * size, page * size),
+      hasNext: sortedSites.length > page * size,
+    };
+  }
+
+  try {
+    await dbConnect();
+
+    const query = {
+      state: SiteState.published,
+    };
+
+    const [sites, count] = await Promise.all([
+      SiteModel.find(query)
+        .sort({ updatedAt: -1 })
+        .skip((page - 1) * size)
+        .limit(size)
+        .populate("categories"),
+      SiteModel.countDocuments(query),
+    ]);
+
+    return {
+      page,
+      sites: sites.map(siteToObject).map(pickCategoryName),
+      hasNext: count > page * size,
+    };
+  } catch (error) {
+    console.log("Get latest sites page", error);
+
+    return {
+      page,
+      sites: [],
+      hasNext: false,
+    };
+  }
+}
+
 export async function submitReview({
   name,
   url,

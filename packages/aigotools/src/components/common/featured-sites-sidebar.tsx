@@ -23,13 +23,13 @@ export default function FeaturedSitesSidebar({
   const detailPaths = createUniqueSiteDetailPaths(sites);
 
   return (
-    <aside className="hidden lg:block">
-      <div className="sticky top-24">
-        <div className="mb-4 flex items-center gap-2">
+    <aside className="hidden self-start lg:sticky lg:top-24 lg:block">
+      <div>
+        <div className="mb-4 flex h-8 items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-lg border border-primary-200 bg-white text-primary-800 shadow-sm">
             <Sparkles size={16} />
           </span>
-          <h2 className="text-xl font-bold text-primary-900">{title}</h2>
+          <h2 className="text-2xl font-bold text-primary-900">{title}</h2>
         </div>
         <div className="space-y-3">
           {sites.slice(0, 6).map((site, index) => {
