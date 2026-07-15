@@ -17,10 +17,12 @@ export default async function Page() {
 
   return (
     <>
+      <Container className="mt-2 xl:hidden">
+        <Search compact className="mx-auto max-w-[420px]" />
+      </Container>
       <Container>
         <Hero />
       </Container>
-      <Search />
       <Container className="mt-10 sm:mt-16">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start xl:gap-14">
           <main className="min-w-0">

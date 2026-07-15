@@ -11,17 +11,20 @@ import { useCallback, useEffect, useState } from "react";
 import { History, SearchIcon, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/navigation";
+
+import { useRouter } from "@/navigation";
 import Container from "@/components/common/container";
 
 export default function Search({
   defaultSearch,
   category,
   className,
+  compact = false,
 }: {
   defaultSearch?: string;
   category?: string;
   className?: string;
+  compact?: boolean;
 }) {
   const [value, setValue] = useState(defaultSearch || "");
 
@@ -41,11 +44,11 @@ export default function Search({
     (newRecord: string) => {
       window.localStorage.setItem(
         "histories",
-        JSON.stringify([newRecord, ...histories].slice(10))
+        JSON.stringify([newRecord, ...histories].slice(10)),
       );
       loadHistories();
     },
-    [histories, loadHistories]
+    [histories, loadHistories],
   );
 
   const clearHistories = useCallback(() => {
@@ -94,43 +97,67 @@ export default function Search({
     </Dropdown>
   ) : null;
 
+  const form = (
+    <form
+      className="w-full"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const searchValue = value.trim();
+
+        if (searchValue) {
+          saveHistories(searchValue);
+        }
+
+        let url = `/search?s=${encodeURIComponent(searchValue)}`;
+
+        if (category) {
+          url += `&c=${encodeURIComponent(category)}`;
+        }
+        router.push(url);
+      }}
+    >
+      <Input
+        classNames={{
+          input: clsx(
+            compact ? "text-sm font-medium" : "text-center font-semibold",
+          ),
+          mainWrapper: "group",
+          inputWrapper: clsx(
+            compact
+              ? "h-10 min-h-10 border-default-200 bg-default-50/80 shadow-none hover:!border-primary-300 group-data-[focus=true]:!border-primary-500"
+              : "!border-primary-900",
+          ),
+        }}
+        endContent={compact ? null : history}
+        placeholder={t("searchPlaceholder")}
+        radius="full"
+        size={compact ? "sm" : "lg"}
+        startContent={
+          <SearchIcon
+            className={clsx(
+              "transition-all",
+              compact
+                ? "text-default-400 group-hover:text-primary-600 group-data-[focus=true]:text-primary-800"
+                : "text-primary-900 group-hover:text-primary-400 group-data-[focus=true]:text-default-foreground",
+            )}
+            size={compact ? 15 : 16}
+            strokeWidth={compact ? 2.5 : 3}
+          />
+        }
+        value={value}
+        variant="bordered"
+        onValueChange={setValue}
+      />
+    </form>
+  );
+
+  if (compact) {
+    return <div className={clsx("w-full", className)}>{form}</div>;
+  }
+
   return (
     <Container className={clsx("mt-10 sm:mt-16", className)}>
-      <div className="max-w-[600px] mx-auto text-center relative">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            saveHistories(value);
-            let url = `/search?s=${encodeURIComponent(value)}`;
-
-            if (category) {
-              url += `&c=${encodeURIComponent(category)}`;
-            }
-            router.push(url);
-          }}
-        >
-          <Input
-            classNames={{
-              input: "text-center font-semibold",
-              mainWrapper: "group",
-              inputWrapper: "!border-primary-900",
-            }}
-            endContent={history}
-            radius="full"
-            size="lg"
-            startContent={
-              <SearchIcon
-                className="text-primary-900 group-hover:text-primary-400 group-data-[focus=true]:text-default-foreground transition-all"
-                size={16}
-                strokeWidth={3}
-              />
-            }
-            value={value}
-            variant="bordered"
-            onValueChange={setValue}
-          />
-        </form>
-      </div>
+      <div className="max-w-[600px] mx-auto text-center relative">{form}</div>
     </Container>
   );
 }

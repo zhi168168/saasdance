@@ -18,32 +18,55 @@ import {
   useUser,
 } from "@clerk/nextjs";
 
+import Search from "@/components/index/search";
+import { AppConfig } from "@/lib/config";
+import { Link, usePathname } from "@/navigation";
+
 import Container from "./container";
 import Logo from "./logo";
 import { ThemeSwitcher } from "./theme-switcher";
 import LanguageSwitcher from "./language-switcher";
 
-import { AppConfig } from "@/lib/config";
-import { Link } from "@/navigation";
-
 export default function Header({ className }: { className?: string }) {
+  const pathname = usePathname();
+  const showSearch = pathname === "/";
+
   if (!AppConfig.clerkClientEnabled) {
-    return <PublicHeader className={className} />;
+    return <PublicHeader className={className} showSearch={showSearch} />;
   }
 
-  return <AuthenticatedHeader className={className} />;
+  return <AuthenticatedHeader className={className} showSearch={showSearch} />;
 }
 
-function PublicHeader({ className }: { className?: string }) {
+function HeaderSearch({ show }: { show: boolean }) {
+  if (!show) {
+    return null;
+  }
+
+  return (
+    <Search
+      compact
+      className="hidden min-w-[220px] max-w-[380px] flex-1 xl:block"
+    />
+  );
+}
+
+function PublicHeader({
+  className,
+  showSearch,
+}: {
+  className?: string;
+  showSearch: boolean;
+}) {
   return (
     <Container
-      className={clsx(
-        "flex items-center justify-between h-20 sm:h-24",
-        className
-      )}
+      className={clsx("flex items-center gap-4 h-20 sm:h-24", className)}
     >
-      <Logo />
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="shrink-0">
+        <Logo />
+      </div>
+      <HeaderSearch show={showSearch} />
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
         <LanguageSwitcher />
         <ThemeSwitcher />
         <Link href={"/submit"}>
@@ -62,7 +85,13 @@ function PublicHeader({ className }: { className?: string }) {
   );
 }
 
-function AuthenticatedHeader({ className }: { className?: string }) {
+function AuthenticatedHeader({
+  className,
+  showSearch,
+}: {
+  className?: string;
+  showSearch: boolean;
+}) {
   const t = useTranslations("header");
 
   const locale = useLocale();
@@ -80,13 +109,13 @@ function AuthenticatedHeader({ className }: { className?: string }) {
 
   return (
     <Container
-      className={clsx(
-        "flex items-center justify-between h-20 sm:h-24",
-        className
-      )}
+      className={clsx("flex items-center gap-4 h-20 sm:h-24", className)}
     >
-      <Logo />
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="shrink-0">
+        <Logo />
+      </div>
+      <HeaderSearch show={showSearch} />
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
         <LanguageSwitcher />
         <ThemeSwitcher />
         <SignedOut>
