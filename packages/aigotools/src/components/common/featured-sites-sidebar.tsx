@@ -57,6 +57,9 @@ export default function FeaturedSitesSidebar({
                         "h-11 w-11 shrink-0 !max-w-none rounded-lg border border-primary-200 bg-white",
                       img: "h-11 w-11 object-contain p-2",
                     }}
+                    decoding="async"
+                    fallbackSrc="/icon.png"
+                    loading="lazy"
                     radius="sm"
                     src={getSiteLogoUrl(site)}
                   />

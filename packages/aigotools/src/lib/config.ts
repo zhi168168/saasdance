@@ -105,6 +105,8 @@ export const AppConfig = {
   // google analytics
   googleAnalyticsID:
     (process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID as string) || "",
+  vercelAnalyticsEnabled:
+    process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ENABLED === "true",
 
   get crawlerAuthToken() {
     return Buffer.from(

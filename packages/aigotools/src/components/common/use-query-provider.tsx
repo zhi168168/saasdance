@@ -5,8 +5,19 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import dynamic from "next/dynamic";
 import { useState } from "react";
+
+const ReactQueryDevtools =
+  process.env.NODE_ENV === "development"
+    ? dynamic(
+        () =>
+          import("@tanstack/react-query-devtools").then(
+            (mod) => mod.ReactQueryDevtools,
+          ),
+        { ssr: false },
+      )
+    : null;
 
 function ReactQueryProvider({ children }: React.PropsWithChildren) {
   const [client] = useState(new QueryClient());
@@ -16,7 +27,7 @@ function ReactQueryProvider({ children }: React.PropsWithChildren) {
       <HydrationBoundary state={dehydrate(client)}>
         {children}
       </HydrationBoundary>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {ReactQueryDevtools && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }

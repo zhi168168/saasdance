@@ -42,6 +42,9 @@ export default function SiteCard({
             "h-12 w-12 shrink-0 !max-w-none rounded-lg border border-primary-200 bg-white sm:h-14 sm:w-14",
           img: "h-12 w-12 object-contain p-2 sm:h-14 sm:w-14",
         }}
+        decoding="async"
+        fallbackSrc="/icon.png"
+        loading="lazy"
         radius="sm"
         src={logoUrl}
       />

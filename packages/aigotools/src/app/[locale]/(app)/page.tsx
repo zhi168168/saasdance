@@ -11,8 +11,8 @@ import { getFeaturedSites, getLatestSitesPage } from "@/lib/actions";
 export default async function Page() {
   const t = await getTranslations("index");
   const [featuredSites, latestSitesPage] = await Promise.all([
-    getFeaturedSites(),
-    getLatestSitesPage({ page: 1, size: 30 }),
+    getFeaturedSites(6),
+    getLatestSitesPage({ page: 1, size: 18 }),
   ]);
 
   return (

@@ -410,19 +410,16 @@ export async function getLatestSitesPage({
       state: SiteState.published,
     };
 
-    const [sites, count] = await Promise.all([
-      SiteModel.find(query)
-        .sort({ updatedAt: -1 })
-        .skip((page - 1) * size)
-        .limit(size)
-        .populate("categories"),
-      SiteModel.countDocuments(query),
-    ]);
+    const sites = await SiteModel.find(query)
+      .sort({ updatedAt: -1 })
+      .skip((page - 1) * size)
+      .limit(size + 1)
+      .populate("categories");
 
     return {
       page,
-      sites: sites.map(siteToObject).map(pickCategoryName),
-      hasNext: count > page * size,
+      sites: sites.slice(0, size).map(siteToObject).map(pickCategoryName),
+      hasNext: sites.length > size,
     };
   } catch (error) {
     console.log("Get latest sites page", error);

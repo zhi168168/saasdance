@@ -61,6 +61,7 @@ export default async function CategorySidebar() {
       <Link
         className="flex h-10 items-center gap-3 rounded-md px-3 text-sm font-semibold text-primary-800 hover:bg-primary-100"
         href="/"
+        prefetch={false}
       >
         <span className="grid h-7 w-7 place-items-center rounded-md border border-primary-200">
           <Home size={16} />
@@ -77,6 +78,7 @@ export default async function CategorySidebar() {
               key={category._id}
               className="flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-primary-700 hover:bg-primary-100 hover:text-primary-900"
               href={`/search?c=${encodeURIComponent(category.name)}`}
+              prefetch={false}
             >
               <span className="grid h-7 w-7 place-items-center rounded-md border border-primary-200 text-primary-500">
                 <Icon size={15} />
@@ -90,6 +92,7 @@ export default async function CategorySidebar() {
       <Link
         className="mt-4 flex h-11 items-center justify-center gap-2 rounded-md border border-primary-200 px-3 text-sm font-bold text-primary-900 hover:bg-primary-100"
         href="/submit"
+        prefetch={false}
       >
         <Sparkles size={16} />
         Submit for free

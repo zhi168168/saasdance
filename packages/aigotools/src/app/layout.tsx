@@ -11,8 +11,12 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/icon.png",
   },
 };
@@ -31,13 +35,18 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const hasGoogleAnalytics = Boolean(AppConfig.googleAnalyticsID);
+  const hasVercelAnalytics = AppConfig.vercelAnalyticsEnabled;
+
   return (
     // eslint-disable-next-line jsx-a11y/html-has-lang
     <html suppressHydrationWarning>
       <body className={clsx(inter.className)}>
         {children}
-        <Analytics />
-        <GoogleAnalytics gaId={AppConfig.googleAnalyticsID} />
+        {hasVercelAnalytics && <Analytics />}
+        {hasGoogleAnalytics && (
+          <GoogleAnalytics gaId={AppConfig.googleAnalyticsID} />
+        )}
       </body>
     </html>
   );

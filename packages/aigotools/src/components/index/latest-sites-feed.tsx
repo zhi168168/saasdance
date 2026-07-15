@@ -24,6 +24,7 @@ export default function LatestSitesFeed({
   initialSites: Site[];
   title: string;
 }) {
+  const pageSize = 18;
   const [sites, setSites] = useState(initialSites);
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(initialHasNext);
@@ -38,7 +39,10 @@ export default function LatestSitesFeed({
     try {
       setLoading(true);
       const nextPage = page + 1;
-      const result = await getLatestSitesPage({ page: nextPage, size: 30 });
+      const result = await getLatestSitesPage({
+        page: nextPage,
+        size: pageSize,
+      });
 
       setSites((currentSites) => currentSites.concat(result.sites));
       setPage(result.page);
