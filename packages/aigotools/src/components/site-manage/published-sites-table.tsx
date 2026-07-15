@@ -13,7 +13,15 @@ import {
 } from "@nextui-org/react";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
-import { Eye, EyeOff, FileUp, RefreshCw, Plus, SearchIcon } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  FileUp,
+  Plus,
+  RefreshCw,
+  SearchIcon,
+  Star,
+} from "lucide-react";
 import clsx from "clsx";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -29,12 +37,14 @@ import {
   managerSearchSites,
   saveSite,
   triggerSitePublish,
+  updateSiteFeatured,
 } from "@/lib/actions";
 import { ProcessStage, SiteState } from "@/lib/constants";
 import { Link } from "@/navigation";
 import { Site } from "@/models/site";
 import { createSiteDetailPath } from "@/lib/site-slug";
 import { createTemplateSite } from "@/lib/create-template-site";
+import { getSiteLogoUrl } from "@/lib/site-logo";
 
 async function parseImportUrls(file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase();
@@ -120,6 +130,29 @@ export default function PublishedSitesTable() {
       } catch (error) {
         console.log(error);
         toast.error(t("failTriggerPublish"));
+      } finally {
+        setUpdating("");
+      }
+    },
+    [handleSearch, t, updating]
+  );
+
+  const handleToggleFeatured = useCallback(
+    async (site: Site) => {
+      if (updating) {
+        return;
+      }
+
+      try {
+        setUpdating(site._id);
+        await updateSiteFeatured(site._id, !site.featured);
+        toast.success(
+          site.featured ? t("unfeatureSuccess") : t("featureSuccess")
+        );
+        await handleSearch();
+      } catch (error) {
+        console.log(error);
+        toast.error(t("featureFailed"));
       } finally {
         setUpdating("");
       }
@@ -334,7 +367,7 @@ export default function PublishedSitesTable() {
           shadow="sm"
         >
           <TableHeader>
-            <TableColumn>Image</TableColumn>
+            <TableColumn>Logo</TableColumn>
             <TableColumn>{t("siteName")}</TableColumn>
             <TableColumn>{t("url")}</TableColumn>
             <TableColumn>{t("badge")}</TableColumn>
@@ -352,15 +385,11 @@ export default function PublishedSitesTable() {
             {result.sites.map((site) => (
               <TableRow key={site._id}>
                 <TableCell>
-                  {site.snapshot ? (
-                    <img
-                      alt={site.name}
-                      className="h-12 w-20 rounded-md object-cover"
-                      src={site.snapshot}
-                    />
-                  ) : (
-                    "-"
-                  )}
+                  <img
+                    alt={`${site.name} logo`}
+                    className="h-12 w-12 rounded-md border border-primary-200 bg-white object-contain p-2"
+                    src={getSiteLogoUrl(site)}
+                  />
                 </TableCell>
                 <TableCell>
                   <Link
@@ -415,6 +444,23 @@ export default function PublishedSitesTable() {
                       onPress={() => handleRefetchImage(site)}
                     >
                       {t("rowAutoFill")}
+                    </Button>
+                    <Button
+                      color={site.featured ? "warning" : "primary"}
+                      isLoading={updating === site._id}
+                      size="sm"
+                      startContent={
+                        updating === site._id ? null : (
+                          <Star
+                            fill={site.featured ? "currentColor" : "none"}
+                            size={14}
+                          />
+                        )
+                      }
+                      variant="flat"
+                      onPress={() => handleToggleFeatured(site)}
+                    >
+                      {site.featured ? t("unfeature") : t("feature")}
                     </Button>
                     <Button
                       color={
